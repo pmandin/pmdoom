@@ -1,0 +1,281 @@
+// Emacs style mode select   -*- C++ -*- 
+//-----------------------------------------------------------------------------
+//
+// $Id: i_system.c,v 1.1 2006/08/18 19:01:29 patrice Exp $
+//
+// Copyright (C) 1993-1996 by id Software, Inc.
+//
+// This source is available for distribution and/or modification
+// only under the terms of the DOOM Source Code License as
+// published by id Software. All rights reserved.
+//
+// The source is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+// for more details.
+//
+// $Log: i_system.c,v $
+// Revision 1.1  2006/08/18 19:01:29  patrice
+// *** empty log message ***
+//
+//
+// DESCRIPTION:
+//
+//-----------------------------------------------------------------------------
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <stdarg.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+#include <SDL.h>
+#ifdef __MINT__
+#include <mint/osbind.h>
+#include <mint/cookie.h>
+#endif
+
+#include "doomdef.h"
+#include "m_misc.h"
+#include "m_fixed.h"
+#include "i_video.h"
+#include "i_audio.h"
+#include "i_net.h"
+
+#include "d_net.h"
+#include "g_game.h"
+
+#include "i_system.h"
+
+#ifdef __MINT__
+enum {
+	MX_STRAM=0,
+	MX_TTRAM,
+	MX_PREFSTRAM,
+	MX_PREFTTRAM
+};
+#endif
+
+sysheap_t	sysheap={DEFAULT_HEAP_SIZE,NULL};
+
+static void I_InitFpu(void);
+
+void
+I_Tactile
+( int	on,
+  int	off,
+  int	total )
+{
+  // UNUSED.
+  on = off = total = 0;
+}
+
+ticcmd_t	emptycmd;
+ticcmd_t*	I_BaseTiccmd(void)
+{
+    return &emptycmd;
+}
+
+byte* I_ZoneBase (int*	size)
+{
+#ifdef __MINT__
+	int mxalloc_present;
+	long maximal_heap_size=0;
+
+	mxalloc_present = ((Sversion()&0xFF)>=0x01)|(Sversion()>=0x1900);
+	if (mxalloc_present) {
+		maximal_heap_size = Mxalloc(-1,MX_PREFTTRAM);
+	} else {
+		maximal_heap_size = Malloc(-1);
+	}
+	maximal_heap_size >>= 10;
+	maximal_heap_size -= 256;	/* Keep some KB */
+	if (sysheap.kb_used>maximal_heap_size)
+		sysheap.kb_used=maximal_heap_size;
+#endif
+
+    *size = sysheap.kb_used<<10;
+
+	printf(" %d Kbytes allocated for zone\n",sysheap.kb_used);
+
+#ifdef __MINT__
+	if (mxalloc_present) {
+		sysheap.zone = (void *)Mxalloc(*size, MX_PREFTTRAM);
+		maximal_heap_size = Mxalloc(-1,MX_STRAM);
+	} else {
+		sysheap.zone = (void *)Malloc(*size);
+		maximal_heap_size = Malloc(-1);
+	}
+	printf(" (%d Kbytes left for audio/video subsystem)\n", maximal_heap_size>>10);
+#else
+	sysheap.zone = malloc (*size);
+#endif
+
+    return (byte *) sysheap.zone;
+}
+
+
+
+//
+// I_GetTime
+// returns time in 1/70th second tics
+//
+int  I_GetTime (void)
+{
+    int			newtics;
+    static int		basetime=0;
+  
+    if (!basetime)
+	basetime = SDL_GetTicks();
+    newtics = ((SDL_GetTicks()-basetime)*TICRATE)/1000;
+    return newtics;
+}
+
+
+
+//
+// I_Init
+//
+void I_Init (void)
+{
+	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK)<0) {
+		fprintf(stderr, "Can not initialize SDL: %s\n", SDL_GetError());
+		exit(1);
+	}
+	atexit(SDL_Quit);
+
+	if (sysaudio.enabled) {
+		if (SDL_InitSubSystem(SDL_INIT_AUDIO)<0) {
+			sysaudio.enabled = false;
+		}
+	}
+
+#ifdef __MINT__
+	if (sysnetwork.layer==NETWORK_STING) {
+		I_InitNetwork = I_InitNetwork_sting;
+		I_ShutdownNetwork = I_ShutdownNetwork_sting;
+	}
+#endif
+
+	I_InitFpu();
+
+	I_InitAudio();
+	//  I_InitGraphics();
+}
+
+static void I_InitFpu(void)
+{
+#ifdef __MINT__
+	unsigned long cpu_cookie;
+
+	if (Getcookie(C__CPU, &cpu_cookie) != C_FOUND) {
+		return;
+	}
+
+	cpu_cookie &= 0xffff;
+	if ((cpu_cookie<20) || (cpu_cookie>60)) {
+		return;
+	}
+
+	FixedMul = FixedMul020;
+	FixedDiv2 = FixedDiv2020;
+
+	if (cpu_cookie==60) {
+	    __asm__ __volatile__ (
+				".chip	68060\n"
+			"	fmove%.l	fpcr,d0\n"
+			"	andl	#~0x30,d0\n"
+			"	orb		#0x20,d0\n"
+			"	fmove%.l	d0,fpcr\n"
+#ifdef __M68020__
+			"	.chip	68020"
+#else
+			"	.chip	68000"
+#endif
+			: /* no return value */
+			: /* no input */
+			: /* clobbered registers */
+				"d0", "cc"
+		);
+
+		FixedMul = FixedMul060;
+		FixedDiv2 = FixedDiv2060;
+	}
+#endif
+}
+
+static void I_Shutdown(void)
+{
+	I_ShutdownNetwork();
+    I_ShutdownAudio();
+    I_ShutdownGraphics();
+
+	if (sysheap.zone) {
+#ifdef __MINT__
+		Mfree(sysheap.zone);
+#else
+		free(sysheap.zone);
+#endif
+		sysheap.zone=NULL;
+	}
+	SDL_Quit();
+}
+
+//
+// I_Quit
+//
+void I_Quit (void)
+{
+    D_QuitNetGame ();
+    M_SaveDefaults ();
+	I_Shutdown();
+    exit(0);
+}
+
+void I_WaitVBL(int count)
+{
+	SDL_Delay((count*1000)/(TICRATE<<1));
+}
+
+
+//
+// I_Error
+//
+extern boolean demorecording;
+
+void I_Error (char *error, ...)
+{
+    va_list	argptr;
+
+	static int firsttime = 1;
+	if (!firsttime) {	/* Avoid infinite error loop */
+		SDL_Quit();
+		exit(1);
+	}
+
+    // Message first.
+    va_start (argptr,error);
+    fprintf (stderr, "Error: ");
+    vfprintf (stderr,error,argptr);
+    fprintf (stderr, "\n");
+    va_end (argptr);
+
+    fflush( stderr );
+
+	firsttime = 0;
+
+    // Shutdown. Here might be other errors.
+	if (demorecording)
+		G_CheckDemoStatus();
+
+	D_QuitNetGame ();
+	I_Shutdown();
+#ifdef __MINT__
+	Cconws("- Press a key to exit -");
+	while (Cconis()==0) {
+	}
+#endif
+    exit(-1);
+}
