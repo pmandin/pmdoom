@@ -90,6 +90,7 @@ extern	int		detailshift;
 //
 extern void		(*colfunc) (void);
 extern void		(*basecolfunc) (void);
+extern void		(*transcolfunc) (void);
 extern void		(*fuzzcolfunc) (void);
 // No shadow effects on floors.
 extern void		(*spanfunc) (void);
