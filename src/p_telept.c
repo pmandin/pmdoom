@@ -1,8 +1,6 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: p_telept.c,v 1.1 2006/08/18 19:01:29 patrice Exp $
-//
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
 // This source is available for distribution and/or modification
@@ -14,30 +12,20 @@
 // FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
 // for more details.
 //
-// $Log: p_telept.c,v $
-// Revision 1.1  2006/08/18 19:01:29  patrice
-// *** empty log message ***
-//
-//
 // DESCRIPTION:
 //	Teleportation.
 //
 //-----------------------------------------------------------------------------
 
 #include "doomdef.h"
-
 #include "s_sound.h"
-
 #include "p_local.h"
-
 
 // Data.
 #include "sounds.h"
 
 // State.
 #include "r_state.h"
-
-
 
 //
 // TELEPORTATION

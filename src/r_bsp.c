@@ -1,8 +1,6 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: r_bsp.c,v 1.1 2006/08/18 19:01:29 patrice Exp $
-//
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
 // This source is available for distribution and/or modification
@@ -14,11 +12,6 @@
 // FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
 // for more details.
 //
-// $Log: r_bsp.c,v $
-// Revision 1.1  2006/08/18 19:01:29  patrice
-// *** empty log message ***
-//
-//
 // DESCRIPTION:
 //	BSP traversal, handling of LineSegs for rendering.
 //
@@ -27,11 +20,8 @@
 #include <stdio.h>
 
 #include "doomdef.h"
-
 #include "m_bbox.h"
-
 #include "i_system.h"
-
 #include "r_main.h"
 #include "r_plane.h"
 #include "r_things.h"
@@ -39,8 +29,6 @@
 // State.
 #include "doomstat.h"
 #include "r_state.h"
-
-
 
 seg_t*		curline;
 side_t*		sidedef;

@@ -1,8 +1,6 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: p_setup.h,v 1.1 2006/08/18 19:01:30 patrice Exp $
-//
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
 // This source is available for distribution and/or modification
@@ -18,7 +16,6 @@
 //   Setup a game, startup stuff.
 //
 //-----------------------------------------------------------------------------
-
 
 #ifndef __P_SETUP__
 #define __P_SETUP__

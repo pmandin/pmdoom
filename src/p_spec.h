@@ -1,8 +1,6 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: p_spec.h,v 1.1 2006/08/18 19:01:30 patrice Exp $
-//
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
 // This source is available for distribution and/or modification
@@ -21,7 +19,6 @@
 //	 utility functions, etc.
 //
 //-----------------------------------------------------------------------------
-
 
 #ifndef __P_SPEC__
 #define __P_SPEC__

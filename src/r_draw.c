@@ -1,8 +1,6 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: r_draw.c,v 1.1 2006/08/18 19:01:29 patrice Exp $
-//
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
 // This source is available for distribution and/or modification
@@ -13,11 +11,6 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
 // for more details.
-//
-// $Log: r_draw.c,v $
-// Revision 1.1  2006/08/18 19:01:29  patrice
-// *** empty log message ***
-//
 //
 // DESCRIPTION:
 //	The actual span/column drawing functions.

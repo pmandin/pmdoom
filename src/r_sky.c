@@ -1,8 +1,6 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: r_sky.c,v 1.1 2006/08/18 19:01:29 patrice Exp $
-//
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
 // This source is available for distribution and/or modification
@@ -14,17 +12,11 @@
 // FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
 // for more details.
 //
-// $Log: r_sky.c,v $
-// Revision 1.1  2006/08/18 19:01:29  patrice
-// *** empty log message ***
-//
-//
 // DESCRIPTION:
 //  Sky rendering. The DOOM sky is a texture map like any
 //  wall, wrapping around. A 1024 columns equal 360 degrees.
 //  The default sky map is 256 columns and repeats 4 times
-//  on a 320 screen?
-//  
+//  on a 320 screen
 //
 //-----------------------------------------------------------------------------
 

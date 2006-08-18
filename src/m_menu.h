@@ -1,8 +1,6 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: m_menu.h,v 1.1 2006/08/18 19:01:30 patrice Exp $
-//
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
 // This source is available for distribution and/or modification
@@ -21,8 +19,6 @@
 
 #ifndef __M_MENU__
 #define __M_MENU__
-
-
 
 #include "d_event.h"
 

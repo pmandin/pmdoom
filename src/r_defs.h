@@ -1,8 +1,6 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: r_defs.h,v 1.1 2006/08/18 19:01:30 patrice Exp $
-//
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
 // This source is available for distribution and/or modification
@@ -21,7 +19,6 @@
 
 #ifndef __R_DEFS__
 #define __R_DEFS__
-
 
 // Screenwidth.
 #include "doomdef.h"
@@ -44,10 +41,6 @@
 #define SIL_BOTH		3
 
 #define MAXDRAWSEGS		256
-
-
-
-
 
 //
 // INTERNAL MAP TYPES
