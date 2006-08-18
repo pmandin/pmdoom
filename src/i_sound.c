@@ -91,6 +91,7 @@ static int *vol_lookup=NULL;
 
 static Sint32 *tmpMixBuffer = NULL;
 static int tmpMixBuffLen = 0;
+static SDL_bool quit = SDL_FALSE;
 
 //
 // This function loads the sound data from the WAD lump,
@@ -428,6 +429,10 @@ void I_UpdateSound(void *unused, Uint8 *stream, int len)
 	Sint32 *source;
 	Sint16 *dest;
 
+	if (quit) {
+		return;
+	}
+
 	memset(tmpMixBuffer, 0, tmpMixBuffLen);
 
 	/* Add each channel to tmp mix buffer */
@@ -576,6 +581,8 @@ void I_ShutdownSound(void)
 {    
 	int i;
 	int done = 0;
+
+	quit = SDL_TRUE;
 
 	// Wait till all pending sounds are finished.
 	while ( !done ) {
