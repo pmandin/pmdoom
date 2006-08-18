@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <SDL_endian.h>
+
 #include "doomdef.h"
 
 #include "i_system.h"
@@ -96,42 +98,42 @@ int			dccount;
 // 
 void R_DrawColumn (void) 
 { 
-	unsigned short		count; 
-	byte*		dest; 
-	fixed_t		frac;
-	fixed_t		fracstep;	 
+	unsigned short	count;
+	byte*		dest;
+	fixed_t		frac, fracstep;
 
 	// Zero length, column does not exceed a pixel.
-    if (dc_yh < dc_yl) 
+	if (dc_yh < dc_yl) 
 		return; 
 				 
 #ifdef RANGECHECK 
-    if ((unsigned)dc_x >= sysvideo.width
-	|| dc_yl < 0
-	|| dc_yh >= sysvideo.height) 
-	I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x); 
+	if ((unsigned)dc_x >= sysvideo.width
+		|| dc_yl < 0 || dc_yh >= sysvideo.height) 
+		I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x); 
 #endif 
 
 	count = dc_yh - dc_yl; 
 
-    // Framebuffer destination address.
-    // Use ylookup LUT to avoid multiply with ScreenWidth.
-    // Use columnofs LUT for subwindows? 
-    dest = ylookup[dc_yl] + columnofs[dc_x];  
+	// Framebuffer destination address.
+	// Use ylookup LUT to avoid multiply with ScreenWidth.
+	// Use columnofs LUT for subwindows? 
+	dest = ylookup[dc_yl] + columnofs[dc_x];  
 
-    // Determine scaling,
-    //  which is the only mapping to be done.
-    fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+	// Determine scaling,
+	//  which is the only mapping to be done.
+	fracstep = dc_iscale; 
+	frac = dc_texturemid + (dc_yl-centery)*fracstep; 
 
     // Inner loop that does the actual texture mapping,
-    //  e.g. a DDA-lile scaling.
-    // This is as fast as it gets.
+	//  e.g. a DDA-lile scaling.
+	// This is as fast as it gets.
+
 #if defined(__GNUC__) && (defined(__M68000__) || defined(__M68020__))
     __asm__ __volatile__ (
 	"moveql	#127,d0\n"
 "	swap	%1\n"
 "	swap	%2\n"
+"	andw	d0,%2\n"
 "	moveql	#0,d1\n"
 "	movew	%0,d2\n"	/* d2 = 3-(count&3) */
 "	notw	d2\n"
@@ -143,31 +145,37 @@ void R_DrawColumn (void)
 "	jmp		a0@(0,d2:w)\n"
 
 "R_DrawColumn_loop:\n"
-"	andw	d0,%2\n"
 "	moveb	%3@(0,%2:w),d1\n"
 "	addxl	%1,%2\n"
-"	moveb	%4@(0,d1:w),%5@\n"
+"	moveb	%4@(0,d1:l),d1\n"
+"	andw	d0,%2\n"
+"	moveb	d1,%5@\n"
 "	addw	%6,%5\n"
 
 "R_DrawColumn_loop1:\n"
-"	andw	d0,%2\n"
 "	moveb	%3@(0,%2:w),d1\n"
 "	addxl	%1,%2\n"
-"	moveb	%4@(0,d1:w),%5@\n"
+"	moveb	%4@(0,d1:l),d1\n"
+"	andw	d0,%2\n"
+"	moveb	d1,%5@\n"
 "	addw	%6,%5\n"
 
-"	andw	d0,%2\n"
 "	moveb	%3@(0,%2:w),d1\n"
 "	addxl	%1,%2\n"
-"	moveb	%4@(0,d1:w),%5@\n"
+"	moveb	%4@(0,d1:l),d1\n"
+"	andw	d0,%2\n"
+"	moveb	d1,%5@\n"
 "	addw	%6,%5\n"
 
-"	andw	d0,%2\n"
 "	moveb	%3@(0,%2:w),d1\n"
 "	addxl	%1,%2\n"
-"	moveb	%4@(0,d1:w),%5@\n"
+"	moveb	%4@(0,d1:l),d1\n"
+"	andw	d0,%2\n"
+"	moveb	d1,%5@\n"
 "	addw	%6,%5\n"
 
+/*"	subql	#1,%0\n"
+"	bpls	R_DrawColumn_loop"*/
 "	dbra	%0,R_DrawColumn_loop"
 	 	: /* no return value */
 	 	: /* input */
@@ -177,123 +185,75 @@ void R_DrawColumn (void)
 	 		"d0", "d1", "d2", "d3", "a0", "cc", "memory" 
 	);
 #else
-    do 
-    {
 	// Re-map color indices from wall texture column
 	//  using a lighting/special effects LUT.
-	*dest = dc_colormap[dc_source[(frac>>FRACBITS)&127]];
-	
-	dest += sysvideo.pitch; 
+
+# define RENDER_PIXEL	\
+	*dest = dc_colormap[dc_source[(frac>>FRACBITS)&127]];	\
+	dest += sysvideo.pitch; 	\
 	frac += fracstep;
-	
-    } while (count--); 
+
+	{
+		int n = count>>2;
+		switch (count & 3) {
+			case 3: do {
+						RENDER_PIXEL;
+			case 2:		RENDER_PIXEL;
+			case 1:		RENDER_PIXEL;
+			case 0:		RENDER_PIXEL;
+					} while (n--); /* FIXME subq/bne */
+		}
+	}
+#undef RENDER_PIXEL
 #endif
 } 
 
 
 void R_DrawColumnLow (void) 
 { 
-    unsigned short			count; 
-    byte*		dest; 
-    fixed_t		frac;
-    fixed_t		fracstep;	 
- 
-    // Zero length.
-    if (dc_yh < dc_yl) 
-	return; 
-				 
+	unsigned short	count, n; 
+	byte*		dest; 
+	fixed_t		frac, fracstep;	 
+
+	// Zero length.
+	if (dc_yh < dc_yl) 
+		return; 
+
 #ifdef RANGECHECK 
-    if ((unsigned)dc_x >= sysvideo.width
-	|| dc_yl < 0
-	|| dc_yh >= sysvideo.height)
-    {
-	
-	I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
-    }
-    //	dccount++; 
+	if ((unsigned)dc_x >= sysvideo.width
+		|| dc_yl < 0 || dc_yh >= sysvideo.height)
+		I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
 #endif 
-    // Blocky mode, need to multiply by 2.
-/*    dc_x <<= 1;*/
+
+	count = dc_yh - dc_yl; 
+
+	dest = ylookup[dc_yl] + columnofs[dc_x<<1];
+
+	fracstep = dc_iscale; 
+	frac = dc_texturemid + (dc_yl-centery)*fracstep;
     
-    count = dc_yh - dc_yl; 
+	// Re-map color indices from wall texture column
+	//  using a lighting/special effects LUT.
 
-    dest = ylookup[dc_yl] + columnofs[dc_x<<1];
-    
-    fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep;
-    
-#if defined(__GNUC__) && (defined(__M68000__) || defined(__M68020__))
-    __asm__ __volatile__ (
-	"moveql	#127,d0\n"
-"	swap	%1\n"
-"	swap	%2\n"
-"	moveql	#0,d1\n"
+#define RENDER_PIXEL	\
+	{	\
+		int spot;	\
+		spot = dc_colormap[dc_source[(frac>>FRACBITS)&127]];	\
+		*(unsigned short *)dest = spot|(spot<<8);	\
+		dest += sysvideo.pitch; 	\
+		frac += fracstep;	\
+	}	
 
-"	movew	%0,d2\n"
-"	notw	d2\n"
-"	andw	#3,d2\n"
-"	lea		R_DrawColumnLow_loop,a0\n"
-"	muluw	#R_DrawColumnLow_loop1-R_DrawColumnLow_loop,d2\n"
-"	lsrw	#2,%0\n"
-"	move	#4,ccr\n"
-"	jmp		a0@(0,d2:w)\n"
-
-"R_DrawColumnLow_loop:\n"
-"	andw	d0,%2\n"
-"	moveb	%3@(0,%2:w),d1\n"
-"	addxl	%1,%2\n"
-"	moveb	%4@(0,d1:w),d2\n"
-"	moveb	d2,%5@+\n"
-"	moveb	d2,%5@+\n"
-"	addw	%6,%5\n"
-
-"R_DrawColumnLow_loop1:\n"
-"	andw	d0,%2\n"
-"	moveb	%3@(0,%2:w),d1\n"
-"	addxl	%1,%2\n"
-"	moveb	%4@(0,d1:w),d2\n"
-"	moveb	d2,%5@+\n"
-"	moveb	d2,%5@+\n"
-"	addw	%6,%5\n"
-
-"	andw	d0,%2\n"
-"	moveb	%3@(0,%2:w),d1\n"
-"	addxl	%1,%2\n"
-"	moveb	%4@(0,d1:w),d2\n"
-"	moveb	d2,%5@+\n"
-"	moveb	d2,%5@+\n"
-"	addw	%6,%5\n"
-
-"	andw	d0,%2\n"
-"	moveb	%3@(0,%2:w),d1\n"
-"	addxl	%1,%2\n"
-"	moveb	%4@(0,d1:w),d2\n"
-"	moveb	d2,%5@+\n"
-"	moveb	d2,%5@+\n"
-"	addw	%6,%5\n"
-
-"	dbra	%0,R_DrawColumnLow_loop"
-	 	: /* no return value */
-	 	: /* input */
-	 		"d"(count), "d"(fracstep), "d"(frac), "a"(dc_source),
-			"a"(dc_colormap), "a"(dest), "a"(sysvideo.pitch-2)
-	 	: /* clobbered registers */
-	 		"d0", "d1", "d2", "d3", "a0", "cc", "memory" 
-	);
-#else
-    do 
-    {
-		int spot;
-	// Hack. Does not work corretly.
-	spot =  dc_colormap[dc_source[(frac>>FRACBITS)&127]];
-	*dest++ = spot;
-	*dest++ = spot;
-	
-	dest += sysvideo.pitch-2;
-	frac += fracstep; 
-
-    } while (count--);
-#endif
+	n = count>>2;
+	switch (count & 3) {
+		case 3: do {
+					RENDER_PIXEL;
+		case 2:		RENDER_PIXEL;
+		case 1:		RENDER_PIXEL;
+		case 0:		RENDER_PIXEL;
+				} while (n--); /* FIXME subq/bne */
+	}
+#undef RENDER_PIXEL
 }
 
 
@@ -315,6 +275,8 @@ int	fuzzoffset[FUZZTABLE] =
 	-1, 1, -1, 1, 1, -1, -1
 }; 
 
+static int fuzzcalcoffset[FUZZTABLE];
+
 static int	fuzzpos = 0; 
 
 
@@ -328,126 +290,136 @@ static int	fuzzpos = 0;
 //
 void R_DrawFuzzColumn (void) 
 { 
-    unsigned short		count; 
-    byte*		dest; 
-    fixed_t		frac;
-    fixed_t		fracstep;	 
+	unsigned short		count, n; 
+	byte*		dest;
+	byte *fuzzcolormap = &colormaps[6*256];
+	fixed_t		frac, fracstep;	 
 
-    // Adjust borders. Low... 
-    if (!dc_yl) 
-	dc_yl = 1;
+	// Adjust borders. Low... 
+	if (!dc_yl) 
+		dc_yl = 1;
 
-    // .. and high.
-    if (dc_yh == viewheight-1) 
-	dc_yh = viewheight - 2; 
-		 
+	// .. and high.
+	if (dc_yh == viewheight-1) 
+		dc_yh = viewheight - 2; 
 
-    // Zero length.
-    if (dc_yh < dc_yl) 
-	return; 
-
+	// Zero length.
+	if (dc_yh < dc_yl) 
+		return; 
     
 #ifdef RANGECHECK 
-    if ((unsigned)dc_x >= sysvideo.width
-	|| dc_yl < 0 || dc_yh >= sysvideo.height)
-    {
-	I_Error ("R_DrawFuzzColumn: %i to %i at %i",
-		 dc_yl, dc_yh, dc_x);
-    }
+	if ((unsigned)dc_x >= sysvideo.width
+		|| dc_yl < 0 || dc_yh >= sysvideo.height)
+		I_Error ("R_DrawFuzzColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
 #endif
 
-    count = dc_yh - dc_yl; 
+	count = dc_yh - dc_yl; 
 
-   
-    // Does not work with blocky mode.
-    dest = ylookup[dc_yl] + columnofs[dc_x];
+	// Does not work with blocky mode.
+	dest = ylookup[dc_yl] + columnofs[dc_x];
 
-    // Looks familiar.
-    fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+	// Looks familiar.
+	fracstep = dc_iscale; 
+	frac = dc_texturemid + (dc_yl-centery)*fracstep; 
 
-    // Looks like an attempt at dithering,
-    //  using the colormap #6 (of 0-31, a bit
-    //  brighter than average).
-    do 
-    {
+	// Looks like an attempt at dithering,
+	//  using the colormap #6 (of 0-31, a bit
+	//  brighter than average).
+
 	// Lookup framebuffer, and retrieve
 	//  a pixel that is either one column
 	//  left or right of the current one.
 	// Add index from colormap to index.
-	*dest = colormaps[6*256+dest[fuzzoffset[fuzzpos]*sysvideo.pitch]]; 
+#define RENDER_PIXEL	\
+	{	\
+		*dest = fuzzcolormap[dest[fuzzcalcoffset[fuzzpos]]]; 	\
+		\
+		fuzzpos++;	/* Clamp table lookup index. */	\
+		fuzzpos &= FUZZTABLE-1;	\
+		\
+		dest += sysvideo.pitch;	\
+		frac += fracstep;	\
+	}
 
-	// Clamp table lookup index.
-	fuzzpos++;
-	fuzzpos &= FUZZTABLE-1;
-	
-	dest += sysvideo.pitch;
-
-	frac += fracstep; 
-    } while (count--); 
+	n = count>>2;
+	switch (count & 3) {
+		case 3: do {
+					RENDER_PIXEL;
+		case 2:		RENDER_PIXEL;
+		case 1:		RENDER_PIXEL;
+		case 0:		RENDER_PIXEL;
+				} while (n--); /* FIXME subq/bne */
+	}
+#undef RENDER_PIXEL
 } 
 
 void R_DrawFuzzColumnLow (void) 
 { 
-    unsigned short		count; 
-    byte		*dest; 
-    fixed_t		frac;
-    fixed_t		fracstep;	 
+	unsigned short	count, n;
+	byte		*dest;
+	byte *fuzzcolormap = &colormaps[6*256];
+	fixed_t		frac, fracstep;
 
-    /*  Adjust borders. Low...  */
-    if (!dc_yl) 
-	dc_yl = 1;
+	/*  Adjust borders. Low...  */
+	if (!dc_yl) 
+		dc_yl = 1;
 
-    /*  .. and high. */
-    if (dc_yh == viewheight-1) 
-	dc_yh = viewheight - 2; 
-		 
+	/*  .. and high. */
+	if (dc_yh == viewheight-1) 
+		dc_yh = viewheight - 2; 
 
-    /*  Zero length. */
-    if (dc_yh < dc_yl) 
-	return; 
-
+	/*  Zero length. */
+	if (dc_yh < dc_yl) 
+		return; 
     
 #ifdef RANGECHECK 
-    if ((unsigned)dc_x >= sysvideo.width
-	|| dc_yl < 0 || dc_yh >= sysvideo.height)
-    {
-	I_Error ("R_DrawFuzzColumn: %i to %i at %i",
-		 dc_yl, dc_yh, dc_x);
-    }
+	if ((unsigned)dc_x >= sysvideo.width
+		|| dc_yl < 0 || dc_yh >= sysvideo.height)
+		I_Error ("R_DrawFuzzColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
 #endif
-    
-    count = dc_yh - dc_yl; 
 
-    /*  Does not work with blocky mode. */
-    dest = ylookup[dc_yl] + columnofs[dc_x << 1];
+	count = dc_yh - dc_yl; 
 
-    /*  Looks familiar. */
-    fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+	/*  Does not work with blocky mode. */
+	dest = ylookup[dc_yl] + columnofs[dc_x << 1];
 
-    /*  Looks like an attempt at dithering, */
-    /*   using the colormap #6 (of 0-31, a bit */
-    /*   brighter than average). */
-    do 
-    {
-	int spot;
-	/*  Lookup framebuffer, and retrieve */
-	/*   a pixel that is either one column */
-	/*   left or right of the current one. */
-	/*  Add index from colormap to index. */
-	spot = colormaps[6*256+dest[fuzzoffset[fuzzpos]*sysvideo.pitch]]; 
+	/*  Looks familiar. */
+	fracstep = dc_iscale; 
+	frac = dc_texturemid + (dc_yl-centery)*fracstep; 
 
-	*dest++ = spot;
-	*dest++ = spot;
+	// Looks like an attempt at dithering,
+	//  using the colormap #6 (of 0-31, a bit
+	//  brighter than average).
 
-	fuzzpos++;
-	fuzzpos &= FUZZTABLE-1;
-	
-	dest += sysvideo.pitch-2;
+	// Lookup framebuffer, and retrieve
+	//  a pixel that is either one column
+	//  left or right of the current one.
+	// Add index from colormap to index.
+#define RENDER_PIXEL	\
+	{	\
+		int spot;	\
+		\
+		spot = fuzzcolormap[dest[fuzzcalcoffset[fuzzpos]]]; 	\
+		\
+		*((unsigned short *) dest) = spot|(spot<<8);	\
+		\
+		fuzzpos++;	/* Clamp table lookup index. */	\
+		fuzzpos &= FUZZTABLE-1;	\
+		\
+		dest += sysvideo.pitch;	\
+		frac += fracstep;	\
+	}
 
-	frac += fracstep; 
-    } while (count--); 
+	n = count>>2;
+	switch (count & 3) {
+		case 3: do {
+					RENDER_PIXEL;
+		case 2:		RENDER_PIXEL;
+		case 1:		RENDER_PIXEL;
+		case 0:		RENDER_PIXEL;
+				} while (n--); /* FIXME subq/bne */
+	}
+#undef RENDER_PIXEL
 }  
   
  
@@ -466,98 +438,166 @@ byte*	translationtables;
 
 void R_DrawTranslatedColumn (void) 
 { 
-    unsigned short	count; 
-    byte*		dest; 
-    fixed_t		frac;
-    fixed_t		fracstep;	 
- 
-    if (dc_yh < dc_yl) 
-	return; 
-				 
+	unsigned short	count;
+	byte*		dest; 
+	fixed_t		frac, fracstep;	 
+
+	if (dc_yh < dc_yl) 
+		return; 
+
 #ifdef RANGECHECK 
-    if ((unsigned)dc_x >= sysvideo.width
-	|| dc_yl < 0
-	|| dc_yh >= sysvideo.height)
-    {
-	I_Error ( "R_DrawColumn: %i to %i at %i",
-		  dc_yl, dc_yh, dc_x);
-    }
-    
+	if ((unsigned)dc_x >= sysvideo.width
+		|| dc_yl < 0 || dc_yh >= sysvideo.height)
+		I_Error ( "R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
 #endif 
 
-    count = dc_yh - dc_yl; 
-    
-    // FIXME. As above.
-    dest = ylookup[dc_yl] + columnofs[dc_x]; 
+	count = dc_yh - dc_yl; 
 
-    // Looks familiar.
-    fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+	// FIXME. As above.
+	dest = ylookup[dc_yl] + columnofs[dc_x]; 
+
+	// Looks familiar.
+	fracstep = dc_iscale; 
+	frac = dc_texturemid + (dc_yl-centery)*fracstep; 
 
     // Here we do an additional index re-mapping.
-    do 
-    {
+
+#if defined(__GNUC__) && (defined(__M68000__) || defined(__M68020__))
+    __asm__ __volatile__ (
+	"moveql	#127,d0\n"
+"	swap	%1\n"
+"	swap	%2\n"
+"	andw	d0,%2\n"
+"	moveql	#0,d1\n"
+"	movew	%0,d2\n"	/* d2 = 3-(count&3) */
+"	notw	d2\n"
+"	andw	#3,d2\n"
+"	lea		R_DrawTranslatedColumn_loop,a0\n"
+"	muluw	#R_DrawTranslatedColumn_loop1-R_DrawTranslatedColumn_loop,d2\n"
+"	lsrw	#2,%0\n"
+"	move	#4,ccr\n"
+"	jmp		a0@(0,d2:w)\n"
+
+"R_DrawTranslatedColumn_loop:\n"
+"	moveb	%3@(0,%2:w),d1\n"
+"	addxl	%1,%2\n"
+"	moveb	%7@(0,d1:l),d1\n"
+"	andw	d0,%2\n"
+"	moveb	%4@(0,d1:l),%5@\n"
+"	addw	%6,%5\n"
+
+"R_DrawTranslatedColumn_loop1:\n"
+"	moveb	%3@(0,%2:w),d1\n"
+"	addxl	%1,%2\n"
+"	moveb	%7@(0,d1:l),d1\n"
+"	andw	d0,%2\n"
+"	moveb	%4@(0,d1:l),%5@\n"
+"	addw	%6,%5\n"
+
+"	moveb	%3@(0,%2:w),d1\n"
+"	addxl	%1,%2\n"
+"	moveb	%7@(0,d1:l),d1\n"
+"	andw	d0,%2\n"
+"	moveb	%4@(0,d1:l),%5@\n"
+"	addw	%6,%5\n"
+
+"	moveb	%3@(0,%2:w),d1\n"
+"	addxl	%1,%2\n"
+"	moveb	%7@(0,d1:l),d1\n"
+"	andw	d0,%2\n"
+"	moveb	%4@(0,d1:l),%5@\n"
+"	addw	%6,%5\n"
+
+/*"	subql	#1,%0\n"
+"	bpls	R_DrawTranslatedColumn_loop"*/
+"	dbra	%0,R_DrawTranslatedColumn_loop"
+	 	: /* no return value */
+	 	: /* input */
+	 		"d"(count), "d"(fracstep), "d"(frac), "a"(dc_source),
+			"a"(dc_colormap), "a"(dest), "a"(sysvideo.pitch),
+			"a"(dc_translation)
+	 	: /* clobbered registers */
+	 		"d0", "d1", "d2", "d3", "a0", "cc", "memory" 
+	);
+#else
 	// Translation tables are used
 	//  to map certain colorramps to other ones,
 	//  used with PLAY sprites.
 	// Thus the "green" ramp of the player 0 sprite
 	//  is mapped to gray, red, black/indigo. 
-	*dest = dc_colormap[dc_translation[dc_source[frac>>FRACBITS]]];
-	dest += sysvideo.pitch;
-	
-	frac += fracstep; 
-    } while (count--); 
+
+#define RENDER_PIXEL	\
+	*dest = dc_colormap[dc_translation[dc_source[(frac>>FRACBITS)&127]]];	\
+	dest += sysvideo.pitch; 	\
+	frac += fracstep;
+
+	{
+		int n = count>>2;
+		switch (count & 3) {
+			case 3: do {
+						RENDER_PIXEL;
+			case 2:		RENDER_PIXEL;
+			case 1:		RENDER_PIXEL;
+			case 0:		RENDER_PIXEL;
+					} while (n--); /* FIXME subq/bne */
+		}
+	}
+#undef RENDER_PIXEL
+#endif
 } 
 
 void R_DrawTranslatedColumnLow (void) 
 { 
-    unsigned short	count; 
-    byte		*dest; 
-    fixed_t		frac;
-    fixed_t		fracstep;	 
- 
-    if (dc_yh < dc_yl) 
-	return; 
-				 
+	unsigned short	count, n; 
+	byte		*dest; 
+	fixed_t		frac, fracstep;	 
+
+	if (dc_yh < dc_yl) 
+		return; 
+
 #ifdef RANGECHECK 
-    if ((unsigned)dc_x >= sysvideo.width
-	|| dc_yl < 0
-	|| dc_yh >= sysvideo.height)
-    {
-	I_Error ( "R_DrawColumn: %i to %i at %i",
-		  dc_yl, dc_yh, dc_x);
-    }
-    
+	if ((unsigned)dc_x >= sysvideo.width
+		|| dc_yl < 0 || dc_yh >= sysvideo.height)
+		I_Error ( "R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
 #endif 
-    
-    count = dc_yh - dc_yl; 
 
-    /*  FIXME. As above. */
-    dest = ylookup[dc_yl] + columnofs[dc_x << 1]; 
+	count = dc_yh - dc_yl; 
 
-    /*  Looks familiar. */
-    fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+	/*  FIXME. As above. */
+	dest = ylookup[dc_yl] + columnofs[dc_x << 1]; 
 
-    /*  Here we do an additional index re-mapping. */
-    do 
-    {
-		int spot;
+	/*  Looks familiar. */
+	fracstep = dc_iscale; 
+	frac = dc_texturemid + (dc_yl-centery)*fracstep; 
 
-	/*  Translation tables are used */
-	/*   to map certain colorramps to other ones, */
-	/*   used with PLAY sprites. */
-	/*  Thus the "green" ramp of the player 0 sprite */
-	/*   is mapped to gray, red, black/indigo.  */
-	spot = dc_colormap[dc_translation[dc_source[frac>>FRACBITS]]];
+	// Translation tables are used
+	//  to map certain colorramps to other ones,
+	//  used with PLAY sprites.
+	// Thus the "green" ramp of the player 0 sprite
+	//  is mapped to gray, red, black/indigo. 
 
-	*dest++ = spot;
-	*dest++ = spot;
+# define RENDER_PIXEL	\
+	{	\
+		int spot;	\
+		\
+		spot = dc_colormap[dc_translation[dc_source[(frac>>FRACBITS)&127]]]; 	\
+		\
+		*((unsigned short *) dest) = spot|(spot<<8);	\
+		\
+		dest += sysvideo.pitch;	\
+		frac += fracstep;	\
+	}
 
-	dest += sysvideo.pitch-2;
-	
-	frac += fracstep; 
-    } while (count--); 
+	n = count>>2;
+	switch (count & 3) {
+		case 3: do {
+					RENDER_PIXEL;
+		case 2:		RENDER_PIXEL;
+		case 1:		RENDER_PIXEL;
+		case 0:		RENDER_PIXEL;
+				} while (n--); /* FIXME subq/bne */
+	}
+#undef RENDER_PIXEL
 } 
 
 
@@ -571,28 +611,24 @@ void R_DrawTranslatedColumnLow (void)
 //
 void R_InitTranslationTables (void)
 {
-    int		i;
-	
-    translationtables = Z_Malloc (256*3+255, PU_STATIC, 0);
-    translationtables = (byte *)(( (int)translationtables + 255 )& ~255);
-    
-    // translate just the 16 green colors
-    for (i=0 ; i<256 ; i++)
-    {
-	if (i >= 0x70 && i<= 0x7f)
-	{
-	    // map green ramp to gray, brown, red
-	    translationtables[i] = 0x60 + (i&0xf);
-	    translationtables [i+256] = 0x40 + (i&0xf);
-	    translationtables [i+512] = 0x20 + (i&0xf);
+	int		i;
+
+	translationtables = Z_Malloc (256*3+255, PU_STATIC, 0);
+	translationtables = (byte *)(( (int)translationtables + 255 )& ~255);
+
+	// translate just the 16 green colors
+	for (i=0 ; i<256 ; i++) {
+		if (i >= 0x70 && i<= 0x7f) {
+			// map green ramp to gray, brown, red
+			translationtables[i] = 0x60 + (i&0xf);
+			translationtables [i+256] = 0x40 + (i&0xf);
+			translationtables [i+512] = 0x20 + (i&0xf);
+		} else {
+			// Keep all other colors as is.
+			translationtables[i] = translationtables[i+256] 
+				= translationtables[i+512] = i;
+		}
 	}
-	else
-	{
-	    // Keep all other colors as is.
-	    translationtables[i] = translationtables[i+256] 
-		= translationtables[i+512] = i;
-	}
-    }
 }
 
 
@@ -624,172 +660,139 @@ fixed_t			ds_ystep;
 // start of a 64*64 tile image 
 byte*			ds_source;	
 
-// just for profiling
-int			dscount;
-
 
 //
 // Draws the actual span.
 void R_DrawSpan (void) 
 { 
-    fixed_t		xfrac;
-    fixed_t		yfrac; 
-    byte*		dest; 
-    unsigned short		count;
-	 
+	unsigned short		count;
+	byte*		dest; 
+
 #ifdef RANGECHECK 
-    if (ds_x2 < ds_x1
-	|| ds_x1<0
-	|| ds_x2>=sysvideo.width  
-	|| (unsigned)ds_y>sysvideo.height)
-    {
-	I_Error( "R_DrawSpan: %i to %i at %i",
-		 ds_x1,ds_x2,ds_y);
-    }
-//	dscount++; 
+	if (ds_x2 < ds_x1 || ds_x1<0 || ds_x2>=sysvideo.width  
+		|| (unsigned)ds_y>sysvideo.height)
+		I_Error( "R_DrawSpan: %i to %i at %i", ds_x1,ds_x2,ds_y);
 #endif 
 
-    
-    xfrac = ds_xfrac; 
-    yfrac = ds_yfrac; 
-	 
-    dest = ylookup[ds_y] + columnofs[ds_x1];
+	dest = ylookup[ds_y] + columnofs[ds_x1];
 
-    // We do not check for zero spans here?
-    count = ds_x2 - ds_x1; 
+	// We do not check for zero spans here?
+	count = ds_x2 - ds_x1; 
 
 #if defined(__GNUC__) && (defined(__M68000__) || defined(__M68020__))
-    __asm__ __volatile__ (
-	"lsrl	#6,%3\n"
-"	lsrl	#6,%1\n"
-"	moveql	#0,d1\n"
+	{
+		long uv, uvstep;
 
-"	movew	%0,d0\n"
-"	notw	d0\n"
-"	andw	#3,d0\n"
+		uv = (ds_yfrac >> 6) & 0xffffUL;
+		uv |= (ds_xfrac<<10) & 0xffff0000UL;
+
+		uvstep = (ds_ystep>>6) & 0xffffUL;
+		uvstep |= (ds_xstep<<10) & 0xffff0000UL;
+
+    __asm__ __volatile__ (
+	"moveql	#0,d1\n"
+"	moveql	#10,d2\n"
+"	moveql	#6,d3\n"
+"	movel	%5,d0\n"
+
+"	movew	%0,d4\n"
+"	notw	d4\n"
+"	andw	#3,d4\n"
 "	lea		R_DrawSpan_loop,a0\n"
-"	muluw	#R_DrawSpan_loop1-R_DrawSpan_loop,d0\n"
+"	muluw	#R_DrawSpan_loop1-R_DrawSpan_loop,d4\n"
 "	lsrw	#2,%0\n"
-"	jmp		a0@(0,d0:w)\n"
+"	jmp		a0@(0,d4:w)\n"
 
 "R_DrawSpan_loop:\n"
-"	movel	%2,d0\n"
-"	movew	%1,d0\n"
-"	lsrl	#6,d0\n"
-"	lsrw	#4,d0\n"
-"	moveb	%6@(0,d0:w),d1\n"
-"	addl	%4,%2\n"
-"	moveb	%5@(0,d1:w),%7@+\n"
-"	addw	%3,%1\n"
+"	lsrw	d2,d0\n"
+"	roll	d3,d0\n"
+"	moveb	%1@(0,d0:w),d1\n"
+"	addl	%2,%5\n"
+"	moveb	%3@(0,d1:l),d1\n"
+"	movel	%5,d0\n"
+"	moveb	d1,%4@+\n"
 
 "R_DrawSpan_loop1:\n"
-"	movel	%2,d0\n"
-"	movew	%1,d0\n"
-"	lsrl	#6,d0\n"
-"	lsrw	#4,d0\n"
-"	moveb	%6@(0,d0:w),d1\n"
-"	addl	%4,%2\n"
-"	moveb	%5@(0,d1:w),%7@+\n"
-"	addw	%3,%1\n"
+"	lsrw	d2,d0\n"
+"	roll	d3,d0\n"
+"	moveb	%1@(0,d0:w),d1\n"
+"	addl	%2,%5\n"
+"	moveb	%3@(0,d1:l),d1\n"
+"	movel	%5,d0\n"
+"	moveb	d1,%4@+\n"
 
-"	movel	%2,d0\n"
-"	movew	%1,d0\n"
-"	lsrl	#6,d0\n"
-"	lsrw	#4,d0\n"
-"	moveb	%6@(0,d0:w),d1\n"
-"	addl	%4,%2\n"
-"	moveb	%5@(0,d1:w),%7@+\n"
-"	addw	%3,%1\n"
+"	lsrw	d2,d0\n"
+"	roll	d3,d0\n"
+"	moveb	%1@(0,d0:w),d1\n"
+"	addl	%2,%5\n"
+"	moveb	%3@(0,d1:l),d1\n"
+"	movel	%5,d0\n"
+"	moveb	d1,%4@+\n"
 
-"	movel	%2,d0\n"
-"	movew	%1,d0\n"
-"	lsrl	#6,d0\n"
-"	lsrw	#4,d0\n"
-"	moveb	%6@(0,d0:w),d1\n"
-"	addl	%4,%2\n"
-"	moveb	%5@(0,d1:w),%7@+\n"
-"	addw	%3,%1\n"
+"	lsrw	d2,d0\n"
+"	roll	d3,d0\n"
+"	moveb	%1@(0,d0:w),d1\n"
+"	addl	%2,%5\n"
+"	moveb	%3@(0,d1:l),d1\n"
+"	movel	%5,d0\n"
+"	moveb	d1,%4@+\n"
 
 "	dbra	%0,R_DrawSpan_loop"
 	 	: /* no return value */
 	 	: /* input */
-	 		"d"(count), "d"(xfrac), "d"(yfrac), "d"(ds_xstep), "d"(ds_ystep),
-			"a"(ds_colormap), "a"(ds_source), "a"(dest)
+	 		"d"(count), "a"(ds_source), "d"(uvstep), "a"(ds_colormap),
+			"a"(dest), "d"(uv)
 	 	: /* clobbered registers */
-	 		"d0", "d1", "a0", "cc", "memory" 
+	 		"d0", "d1", "d2", "d3", "d4", "a0", "cc", "memory" 
 	);
+	}
 #else
-    do 
-    {
-	    int			spot; 
+# define RENDER_PIXEL	\
+	{	\
+	    int spot;	\
+		\
+		/* Current texture index in u,v. */	\
+		spot = ((yfrac>>(16-6))&(63*64)) + ((xfrac>>16)&63); \
+		\
+		/* Lookup pixel from flat texture tile, */ \
+		/*  re-index using light/colormap. */ \
+		*dest++ = ds_colormap[ds_source[spot]];	\
+		\
+		/* Next step in u,v. */ \
+		xfrac += ds_xstep;	\
+		yfrac += ds_ystep;	\
+	}
 
-	// Current texture index in u,v.
-	spot = ((yfrac>>(16-6))&(63*64)) + ((xfrac>>16)&63);
+	{
+		fixed_t xfrac = ds_xfrac, yfrac = ds_yfrac;
 
-	// Lookup pixel from flat texture tile,
-	//  re-index using light/colormap.
-	*dest++ = ds_colormap[ds_source[spot]];
-
-	// Next step in u,v.
-	xfrac += ds_xstep; 
-	yfrac += ds_ystep;
-	
-    } while (count--); 
+		int n = count>>2;
+		switch (count & 3) {
+			case 3: do {
+						RENDER_PIXEL;
+			case 2:		RENDER_PIXEL;
+			case 1:		RENDER_PIXEL;
+			case 0:		RENDER_PIXEL;
+					} while (n--); /* FIXME subq/bne */
+		}
+	}
+#undef RENDER_PIXEL
 #endif
 } 
 
 void R_DrawSpanFlat (void) 
 { 
-    fixed_t		xfrac;
-    fixed_t		yfrac; 
-    byte*		dest; 
-    unsigned short	count;
-	unsigned long color;
-	 
+	byte*		dest; 
+
 #ifdef RANGECHECK 
-    if (ds_x2 < ds_x1
-	|| ds_x1<0
-	|| ds_x2>=sysvideo.width  
-	|| (unsigned)ds_y>sysvideo.height)
-    {
-	I_Error( "R_DrawSpanFlat: %i to %i at %i",
-		 ds_x1,ds_x2,ds_y);
-    }
-//	dscount++; 
+	if (ds_x2 < ds_x1 || ds_x1<0 || ds_x2>=sysvideo.width  
+		|| (unsigned)ds_y>sysvideo.height)
+		I_Error( "R_DrawSpanFlat: %i to %i at %i", ds_x1,ds_x2,ds_y);
 #endif 
 
-    
-    xfrac = ds_xfrac; 
-    yfrac = ds_yfrac; 
-	 
-    dest = ylookup[ds_y] + columnofs[ds_x1];
+	dest = ylookup[ds_y] + columnofs[ds_x1];
 
-    // We do not check for zero spans here?
-    count = ds_x2 - ds_x1; 
-
-	color = ds_colormap[*ds_source];
-	color |= (color<<24)|(color<<16)|(color<<8);
-
-	if ((((unsigned long)dest) & 1) && (count>1)) {
-		*dest++ = color;
-		count--;
-	}
-
-	if (count>4) {
-		unsigned long *dest2=(unsigned long *)dest;
-		int count2 = (count>>2)-1;
-		do {
-			*dest2++ = color;
-		} while (count2--); 
-		count -= (count2+1)<<2;
-		dest += (count2+1)<<2;
-	}
-
-	if (count>0) {
-		do {
-			*dest++ = color;
-		} while (count--); 
-	}	
+	memset(dest, ds_colormap[*ds_source], ds_x2 - ds_x1 +1);
 } 
 
 
@@ -798,167 +801,139 @@ void R_DrawSpanFlat (void)
 //
 void R_DrawSpanLow (void) 
 { 
-    fixed_t		xfrac;
-    fixed_t		yfrac; 
-    byte*		dest; 
-    unsigned short		count;
-	 
-#ifdef RANGECHECK 
-    if (ds_x2 < ds_x1
-	|| ds_x1<0
-	|| ds_x2>=sysvideo.width  
-	|| (unsigned)ds_y>sysvideo.height)
-    {
-	I_Error( "R_DrawSpan: %i to %i at %i",
-		 ds_x1,ds_x2,ds_y);
-    }
-//	dscount++; 
-#endif 
-	 
-    xfrac = ds_xfrac; 
-    yfrac = ds_yfrac; 
+	unsigned short		count;
+	byte *dest; 
 
-    dest = ylookup[ds_y] + columnofs[ds_x1<<1];
-  
-    count = ds_x2 - ds_x1; 
+#ifdef RANGECHECK 
+	if (ds_x2 < ds_x1 || ds_x1<0 || ds_x2>=sysvideo.width  
+		|| (unsigned)ds_y>sysvideo.height)
+		I_Error( "R_DrawSpan: %i to %i at %i", ds_x1,ds_x2,ds_y);
+#endif 
+
+	dest = ylookup[ds_y] + columnofs[ds_x1<<1];
+
+	count = ds_x2 - ds_x1; 
 
 #if defined(__GNUC__) && (defined(__M68000__) || defined(__M68020__))
-    __asm__ __volatile__ (
-	"lsrl	#6,%3\n"
-"	lsrl	#6,%1\n"
-"	moveql	#0,d1\n"
+	{
+		long uv, uvstep;
 
-"	movew	%0,d0\n"
-"	notw	d0\n"
-"	andw	#3,%%d0\n"
+		uv = (ds_yfrac >> 6) & 0xffffUL;
+		uv |= (ds_xfrac<<10) & 0xffff0000UL;
+
+		uvstep = (ds_ystep>>6) & 0xffffUL;
+		uvstep |= (ds_xstep<<10) & 0xffff0000UL;
+
+    __asm__ __volatile__ (
+	"moveql	#0,d1\n"
+"	moveql	#10,d2\n"
+"	moveql	#6,d3\n"
+"	movel	%5,d0\n"
+"	lsrw	d2,d0\n"
+
+"	movew	%0,d4\n"
+"	notw	d4\n"
+"	andw	#3,d4\n"
 "	lea		R_DrawSpanLow_loop,a0\n"
-"	muluw	#R_DrawSpanLow_loop1-R_DrawSpanLow_loop,d0\n"
+"	muluw	#R_DrawSpanLow_loop1-R_DrawSpanLow_loop,d4\n"
 "	lsrw	#2,%0\n"
-"	jmp		a0@(0,d0:w)\n"
+"	jmp		a0@(0,d4:w)\n"
 
 "R_DrawSpanLow_loop:\n"
-"	movel	%2,d0\n"
-"	movew	%1,d0\n"
-"	lsrl	#6,d0\n"
-"	lsrw	#4,d0\n"
-"	moveb	%6@(0,d0:w),d1\n"
-"	addl	%4,%2\n"
-"	moveb	%5@(0,d1:w),d2\n"
-"	moveb	d2,%7@+\n"
-"	addw	%3,%1\n"
-"	moveb	d2,%7@+\n"
+"	roll	d3,d0\n"
+"	moveb	%1@(0,d0:w),d1\n"
+"	addl	%2,%5\n"
+"	moveb	%3@(0,d1:l),d1\n"
+"	movel	%5,d0\n"
+"	moveb	d1,%4@+\n"
+"	lsrw	d2,d0\n"
+"	moveb	d1,%4@+\n"
 
 "R_DrawSpanLow_loop1:\n"
-"	movel	%2,d0\n"
-"	movew	%1,d0\n"
-"	lsrl	#6,d0\n"
-"	lsrw	#4,d0\n"
-"	moveb	%6@(0,d0:w),d1\n"
-"	addl	%4,%2\n"
-"	moveb	%5@(0,d1:w),d2\n"
-"	moveb	d2,%7@+\n"
-"	addw	%3,%1\n"
-"	moveb	d2,%7@+\n"
+"	roll	d3,d0\n"
+"	moveb	%1@(0,d0:w),d1\n"
+"	addl	%2,%5\n"
+"	moveb	%3@(0,d1:l),d1\n"
+"	movel	%5,d0\n"
+"	moveb	d1,%4@+\n"
+"	lsrw	d2,d0\n"
+"	moveb	d1,%4@+\n"
 
-"	movel	%2,d0\n"
-"	movew	%1,d0\n"
-"	lsrl	#6,d0\n"
-"	lsrw	#4,d0\n"
-"	moveb	%6@(0,d0:w),d1\n"
-"	addl	%4,%2\n"
-"	moveb	%5@(0,d1:w),d2\n"
-"	moveb	d2,%7@+\n"
-"	addw	%3,%1\n"
-"	moveb	d2,%7@+\n"
+"	roll	d3,d0\n"
+"	moveb	%1@(0,d0:w),d1\n"
+"	addl	%2,%5\n"
+"	moveb	%3@(0,d1:l),d1\n"
+"	movel	%5,d0\n"
+"	moveb	d1,%4@+\n"
+"	lsrw	d2,d0\n"
+"	moveb	d1,%4@+\n"
 
-"	movel	%2,d0\n"
-"	movew	%1,d0\n"
-"	lsrl	#6,d0\n"
-"	lsrw	#4,d0\n"
-"	moveb	%6@(0,d0:w),d1\n"
-"	addl	%4,%2\n"
-"	moveb	%5@(0,d1:w),d2\n"
-"	moveb	d2,%7@+\n"
-"	addw	%3,%1\n"
-"	moveb	d2,%7@+\n"
+"	roll	d3,d0\n"
+"	moveb	%1@(0,d0:w),d1\n"
+"	addl	%2,%5\n"
+"	moveb	%3@(0,d1:l),d1\n"
+"	movel	%5,d0\n"
+"	moveb	d1,%4@+\n"
+"	lsrw	d2,d0\n"
+"	moveb	d1,%4@+\n"
 
 "	dbra	%0,R_DrawSpanLow_loop"
 	 	: /* no return value */
 	 	: /* input */
-	 		"d"(count), "d"(xfrac), "d"(yfrac), "d"(ds_xstep), "d"(ds_ystep),
-			"a"(ds_colormap), "a"(ds_source), "a"(dest)
+	 		"d"(count), "a"(ds_source), "d"(uvstep), "a"(ds_colormap),
+			"a"(dest), "d"(uv)
 	 	: /* clobbered registers */
-	 		"d0", "d1", "d2", "a0", "cc", "memory" 
+	 		"d0", "d1", "d2", "d3", "d4", "a0", "cc", "memory" 
 	);
+	}
 #else
-    do 
-    { 
-	    int			spot; 
+# define RENDER_PIXEL	\
+	{	\
+	    int spot;	\
+		\
+		/* Current texture index in u,v. */	\
+		spot = ((yfrac>>(16-6))&(63*64)) + ((xfrac>>16)&63); \
+		spot = ds_colormap[ds_source[spot]];	\
+		\
+		/* Lookup pixel from flat texture tile, */ \
+		/*  re-index using light/colormap. */ \
+		*(unsigned short *)dest = spot|(spot<<8);	\
+		dest += 2;	\
+		\
+		/* Next step in u,v. */ \
+		xfrac += ds_xstep;	\
+		yfrac += ds_ystep;	\
+	}
 
-	spot = ((yfrac>>(16-6))&(63*64)) + ((xfrac>>16)&63);
-	spot = ds_colormap[ds_source[spot]];
-	// Lowres/blocky mode does it twice,
-	//  while scale is adjusted appropriately.
-	*dest++ = spot; 
-	*dest++ = spot;
-	
-	xfrac += ds_xstep; 
-	yfrac += ds_ystep; 
-
-    } while (count--); 
+	{
+		fixed_t		xfrac = ds_xfrac, yfrac = ds_yfrac;
+		int n = count>>2;
+		switch (count & 3) {
+			case 3: do {
+						RENDER_PIXEL;
+			case 2:		RENDER_PIXEL;
+			case 1:		RENDER_PIXEL;
+			case 0:		RENDER_PIXEL;
+					} while (n--); /* FIXME subq/bne */
+		}
+	}
+#undef RENDER_PIXEL
 #endif
 }
 
 void R_DrawSpanLowFlat (void) 
 { 
-    fixed_t		xfrac;
-    fixed_t		yfrac; 
-    byte*		dest; 
-    unsigned short		count;
-	unsigned long color;
-	 
+	byte*		dest; 
+
 #ifdef RANGECHECK 
-    if (ds_x2 < ds_x1
-	|| ds_x1<0
-	|| ds_x2>=sysvideo.width  
-	|| (unsigned)ds_y>sysvideo.height)
-    {
-	I_Error( "R_DrawSpan: %i to %i at %i",
-		 ds_x1,ds_x2,ds_y);
-    }
-//	dscount++; 
+	if (ds_x2 < ds_x1 || ds_x1<0 || ds_x2>=sysvideo.width  
+		|| (unsigned)ds_y>sysvideo.height)
+		I_Error( "R_DrawSpan: %i to %i at %i", ds_x1,ds_x2,ds_y);
 #endif 
-	 
-    xfrac = ds_xfrac; 
-    yfrac = ds_yfrac; 
 
-    dest = ylookup[ds_y] + columnofs[ds_x1<<1];
-  
-    count = (ds_x2 - ds_x1)<<1;
+	dest = ylookup[ds_y] + columnofs[ds_x1<<1];
 
-	color = ds_colormap[*ds_source];
-	color |= (color<<24)|(color<<16)|(color<<8);
-
-	if ((((unsigned long)dest) & 1) && (count>1)) {
-		*dest++ = color;
-		count--;
-	}
-
-	if (count>4) {
-		unsigned long *dest2=(unsigned long *)dest;
-		int count2 = (count>>2)-1;
-		do {
-			*dest2++ = color;
-		} while (count2--); 
-		count -= (count2+1)<<2;
-		dest += (count2+1)<<2;
-	}
-
-	if (count>0) {
-		do {
-			*dest++ = color;
-		} while (count--); 
-	}	
+	memset(dest, ds_colormap[*ds_source], (ds_x2 - ds_x1 + 1)<<1);
 }
 
 //
@@ -1007,6 +982,11 @@ R_InitBuffer
 	// Preclaculate all row offsets.
 	for (i=0 ; i<height ; i++) 
 		ylookup[i] = screens[0] + (i+viewwindowy)*sysvideo.pitch; 
+
+	/* Recalc fuzz table */
+	for (i=0; i<FUZZTABLE; i++) {
+		fuzzcalcoffset[i] = fuzzoffset[i] * sysvideo.pitch;
+	}
 } 
  
  
