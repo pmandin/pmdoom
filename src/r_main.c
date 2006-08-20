@@ -33,9 +33,9 @@
 #include "r_sky.h"
 
 #include "st_stuff.h"
+#include "i_system.h"
 #include "i_video.h"
 #include "z_zone.h"
-
 
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW		2048	
@@ -694,7 +694,11 @@ void R_ExecuteSetViewSize (void)
 	projection = centerxfrac;
 
 	if (!detailshift) {
-		colfunc = basecolfunc = R_DrawColumn;
+		if (sysgame.cpu060) {
+			colfunc = basecolfunc = R_DrawColumn060;
+		} else {
+			colfunc = basecolfunc = R_DrawColumn;
+		}
 		fuzzcolfunc = R_DrawFuzzColumn;
 		transcolfunc = R_DrawTranslatedColumn;
 		if (sysvideo.textured_spans)

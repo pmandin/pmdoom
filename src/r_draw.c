@@ -208,6 +208,66 @@ void R_DrawColumn (void)
 #endif
 } 
 
+void R_DrawColumn060 (void) 
+{ 
+	int	count, rshift;
+	byte	*dest, *dest_end;
+	fixed_t	frac, fracstep;
+
+	// Zero length, column does not exceed a pixel.
+	if (dc_yh < dc_yl) 
+		return; 
+				 
+#ifdef RANGECHECK 
+	if ((unsigned)dc_x >= sysvideo.width
+		|| dc_yl < 0 || dc_yh >= sysvideo.height) 
+		I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x); 
+#endif 
+
+	count = dc_yh - dc_yl; 
+
+	// Framebuffer destination address.
+	// Use ylookup LUT to avoid multiply with ScreenWidth.
+	// Use columnofs LUT for subwindows? 
+	dest = ylookup[dc_yl] + columnofs[dc_x];  
+	dest_end = &dest[count*sysvideo.pitch];
+
+	// Determine scaling,
+	//  which is the only mapping to be done.
+	fracstep = dc_iscale; 
+	frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+
+	fracstep <<= 16-7;
+	frac <<= 16-7;
+	rshift = 32-7;
+
+#if defined(__GNUC__) && (defined(__M68000__) || defined(__M68020__))
+    __asm__ __volatile__ (
+"	moveql	#0,d1\n"
+"	movel	%1,d0\n"
+"	lsrl	%2,d0\n"
+
+"R_DrawColumn060_loop:\n"
+"	moveb	%3@(0,d0:w),d1\n"
+"	addl	%0,%1\n"
+"	moveb	%4@(0,d1:l),d1\n"
+"	movel	%1,d0\n"
+"	lsrl	%2,d0\n"
+"	moveb	d1,%5@\n"
+"	cmpal	%7,%5\n"
+"	addw	%6,%5\n"
+
+"	bnes	R_DrawColumn060_loop"
+	 	: /* no return value */
+	 	: /* input */
+	 		"d"(fracstep), "d"(frac), "d"(rshift),
+			"a"(dc_source), "a"(dc_colormap), "a"(dest),
+			"a"(sysvideo.pitch), "a"(dest_end)
+	 	: /* clobbered registers */
+	 		"d0", "d1", "cc", "memory" 
+	);
+#endif
+} 
 
 void R_DrawColumnLow (void) 
 { 
