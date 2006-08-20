@@ -174,7 +174,7 @@ void R_DrawColumn (void)
 "	moveb	d1,%5@\n"
 "	addw	%6,%5\n"
 
-/*"	subql	#1,%0\n"
+/*"	subqw	#1,%0\n"
 "	bpls	R_DrawColumn_loop"*/
 "	dbra	%0,R_DrawColumn_loop"
 	 	: /* no return value */
@@ -201,7 +201,7 @@ void R_DrawColumn (void)
 			case 2:		RENDER_PIXEL;
 			case 1:		RENDER_PIXEL;
 			case 0:		RENDER_PIXEL;
-					} while (n--); /* FIXME subq/bne */
+					} while (--n>=0);
 		}
 	}
 #undef RENDER_PIXEL
@@ -211,7 +211,7 @@ void R_DrawColumn (void)
 
 void R_DrawColumnLow (void) 
 { 
-	unsigned short	count, n; 
+	int	count, n; 
 	byte*		dest; 
 	fixed_t		frac, fracstep;	 
 
@@ -247,11 +247,11 @@ void R_DrawColumnLow (void)
 	n = count>>2;
 	switch (count & 3) {
 		case 3: do {
-					RENDER_PIXEL;
+				RENDER_PIXEL;
 		case 2:		RENDER_PIXEL;
 		case 1:		RENDER_PIXEL;
 		case 0:		RENDER_PIXEL;
-				} while (n--); /* FIXME subq/bne */
+			} while (--n>=0);
 	}
 #undef RENDER_PIXEL
 }
@@ -290,7 +290,7 @@ static int	fuzzpos = 0;
 //
 void R_DrawFuzzColumn (void) 
 { 
-	unsigned short		count, n; 
+	int		count, n; 
 	byte*		dest;
 	byte *fuzzcolormap = &colormaps[6*256];
 	fixed_t		frac, fracstep;	 
@@ -344,18 +344,18 @@ void R_DrawFuzzColumn (void)
 	n = count>>2;
 	switch (count & 3) {
 		case 3: do {
-					RENDER_PIXEL;
+				RENDER_PIXEL;
 		case 2:		RENDER_PIXEL;
 		case 1:		RENDER_PIXEL;
 		case 0:		RENDER_PIXEL;
-				} while (n--); /* FIXME subq/bne */
+			} while (--n>=0);
 	}
 #undef RENDER_PIXEL
 } 
 
 void R_DrawFuzzColumnLow (void) 
 { 
-	unsigned short	count, n;
+	int	count, n;
 	byte		*dest;
 	byte *fuzzcolormap = &colormaps[6*256];
 	fixed_t		frac, fracstep;
@@ -413,11 +413,11 @@ void R_DrawFuzzColumnLow (void)
 	n = count>>2;
 	switch (count & 3) {
 		case 3: do {
-					RENDER_PIXEL;
+				RENDER_PIXEL;
 		case 2:		RENDER_PIXEL;
 		case 1:		RENDER_PIXEL;
 		case 0:		RENDER_PIXEL;
-				} while (n--); /* FIXME subq/bne */
+			} while (--n>=0);
 	}
 #undef RENDER_PIXEL
 }  
@@ -508,7 +508,7 @@ void R_DrawTranslatedColumn (void)
 "	moveb	%4@(0,d1:l),%5@\n"
 "	addw	%6,%5\n"
 
-/*"	subql	#1,%0\n"
+/*"	subqw	#1,%0\n"
 "	bpls	R_DrawTranslatedColumn_loop"*/
 "	dbra	%0,R_DrawTranslatedColumn_loop"
 	 	: /* no return value */
@@ -535,11 +535,11 @@ void R_DrawTranslatedColumn (void)
 		int n = count>>2;
 		switch (count & 3) {
 			case 3: do {
-						RENDER_PIXEL;
+					RENDER_PIXEL;
 			case 2:		RENDER_PIXEL;
 			case 1:		RENDER_PIXEL;
 			case 0:		RENDER_PIXEL;
-					} while (n--); /* FIXME subq/bne */
+				} while (--n>=0);
 		}
 	}
 #undef RENDER_PIXEL
@@ -548,7 +548,7 @@ void R_DrawTranslatedColumn (void)
 
 void R_DrawTranslatedColumnLow (void) 
 { 
-	unsigned short	count, n; 
+	int	count, n; 
 	byte		*dest; 
 	fixed_t		frac, fracstep;	 
 
@@ -591,11 +591,11 @@ void R_DrawTranslatedColumnLow (void)
 	n = count>>2;
 	switch (count & 3) {
 		case 3: do {
-					RENDER_PIXEL;
+				RENDER_PIXEL;
 		case 2:		RENDER_PIXEL;
 		case 1:		RENDER_PIXEL;
 		case 0:		RENDER_PIXEL;
-				} while (n--); /* FIXME subq/bne */
+			} while (--n>=0);
 	}
 #undef RENDER_PIXEL
 } 
@@ -737,7 +737,8 @@ void R_DrawSpan (void)
 "	movel	%5,d0\n"
 "	moveb	d1,%4@+\n"
 
-"	dbra	%0,R_DrawSpan_loop"
+"	subqw	#1,%0\n"
+"	bpls	R_DrawSpan_loop"
 	 	: /* no return value */
 	 	: /* input */
 	 		"d"(count), "a"(ds_source), "d"(uvstep), "a"(ds_colormap),
@@ -769,11 +770,11 @@ void R_DrawSpan (void)
 		int n = count>>2;
 		switch (count & 3) {
 			case 3: do {
-						RENDER_PIXEL;
+					RENDER_PIXEL;
 			case 2:		RENDER_PIXEL;
 			case 1:		RENDER_PIXEL;
 			case 0:		RENDER_PIXEL;
-					} while (n--); /* FIXME subq/bne */
+				} while (--n>=0);
 		}
 	}
 #undef RENDER_PIXEL
@@ -877,7 +878,8 @@ void R_DrawSpanLow (void)
 "	lsrw	d2,d0\n"
 "	moveb	d1,%4@+\n"
 
-"	dbra	%0,R_DrawSpanLow_loop"
+"	subqw	#1,%0\n"
+"	bpls	R_DrawSpanLow_loop"
 	 	: /* no return value */
 	 	: /* input */
 	 		"d"(count), "a"(ds_source), "d"(uvstep), "a"(ds_colormap),
@@ -910,11 +912,11 @@ void R_DrawSpanLow (void)
 		int n = count>>2;
 		switch (count & 3) {
 			case 3: do {
-						RENDER_PIXEL;
+					RENDER_PIXEL;
 			case 2:		RENDER_PIXEL;
 			case 1:		RENDER_PIXEL;
 			case 0:		RENDER_PIXEL;
-					} while (n--); /* FIXME subq/bne */
+				} while (--n>=0);
 		}
 	}
 #undef RENDER_PIXEL
