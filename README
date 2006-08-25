@@ -45,7 +45,3 @@ You need the PC version of Doom (shareware or registered) or Doom 2.
 	Network: '-network ###'
 		unix:	Unix sockets network (default)
 		sting:	Sting sockets network (Atari only)
-
--- 
-Patrice Mandin <pmandin@caramail.com>
-Web:	http://pmandin.atari.org/

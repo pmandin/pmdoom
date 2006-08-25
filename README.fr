@@ -51,7 +51,3 @@ ou enregistre) ou de Doom 2.
 	Reseau: '-network ###'
 		unix:	gestion Unix du reseau (par defaut)
 		sting:	gestion Sting du reseau (Atari seulement)
-
--- 
-Patrice Mandin <pmandin@caramail.com>
-Web:	http://pmandin.atari.org/
