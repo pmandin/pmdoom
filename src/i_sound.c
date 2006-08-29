@@ -427,7 +427,7 @@ int I_SoundIsPlaying(int handle)
 void I_UpdateSound(void *unused, Uint8 *stream, int len)
 {
 	int i, chan, srclen;
-	boolean mixToFinal = true;
+	boolean mixToFinal = false;
 	Sint32 *source;
 	Sint16 *dest;
 
@@ -540,11 +540,10 @@ void I_UpdateSound(void *unused, Uint8 *stream, int len)
 	source = tmpMixBuffer;	
 	if (sysaudio.convert) {
 		dest = (Sint16 *) tmpMixBuffer2;
-		mixToFinal = false;
 	} else {
 		dest = (Sint16 *) stream;
-#ifndef ENABLE_SDLMIXER
-		mixToFinal = false;
+#ifdef ENABLE_SDLMIXER
+		mixToFinal = true;
 #endif
 	}
 
