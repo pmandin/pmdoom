@@ -89,7 +89,8 @@ static int		steptable[256];
 // Volume lookups.
 static int *vol_lookup=NULL;
 
-static Sint32 *tmpMixBuffer = NULL;
+static Sint32 *tmpMixBuffer = NULL;	/* 32bit mixing buffer for n voices */
+static Sint16 *tmpMixBuffer2 = NULL;	/* 16bit clipped mixing buffer for conv */
 static int tmpMixBuffLen = 0;
 static SDL_bool quit = SDL_FALSE;
 
@@ -425,7 +426,7 @@ int I_SoundIsPlaying(int handle)
 //
 void I_UpdateSound(void *unused, Uint8 *stream, int len)
 {
-	int i, chan;
+	int i, chan, srclen;
 	Sint32 *source;
 	Sint16 *dest;
 
@@ -434,6 +435,10 @@ void I_UpdateSound(void *unused, Uint8 *stream, int len)
 	}
 
 	memset(tmpMixBuffer, 0, tmpMixBuffLen);
+	srclen = len;
+	if (sysaudio.convert) {
+		srclen = (int) (len / sysaudio.audioCvt.len_ratio);
+	}
 
 	/* Add each channel to tmp mix buffer */
 	for ( chan = 0; chan < NUM_CHANNELS; chan++ ) {
@@ -458,8 +463,8 @@ void I_UpdateSound(void *unused, Uint8 *stream, int len)
 
 		maxlen = FixedDiv(channels[chan].length-position, step);
 		end_of_sample = SDL_FALSE;
-		if ((len>>2) <= maxlen) {
-			maxlen = len>>2;
+		if ((srclen>>2) <= maxlen) {
+			maxlen = srclen>>2;
 		} else {
 			end_of_sample = SDL_TRUE;
 		}
@@ -530,10 +535,14 @@ void I_UpdateSound(void *unused, Uint8 *stream, int len)
 		channels[ chan ].stepremainder = stepremainder;
 	}
 
-	/* Now rescale it for final buffer */
+	/* Now clip values for final buffer */
 	source = tmpMixBuffer;	
-	dest = (Sint16 *) stream;
-	for (i=0; i<len>>2; i++) {
+	if (sysaudio.convert) {
+		dest = (Sint16 *) tmpMixBuffer2;
+	} else {
+		dest = (Sint16 *) stream;
+	}
+	for (i=0; i<srclen>>2; i++) {
 		Sint32 dl, dr;
 
 #ifdef ENABLE_SDLMIXER
@@ -557,6 +566,15 @@ void I_UpdateSound(void *unused, Uint8 *stream, int len)
 			dr = -0x8000;
 
 		*dest++ = dr;
+	}
+
+	/* Conversion if needed */
+	if (sysaudio.convert) {
+		sysaudio.audioCvt.buf = (Uint8 *) tmpMixBuffer2;
+		sysaudio.audioCvt.len = srclen;
+		SDL_ConvertAudio(&sysaudio.audioCvt);
+
+		SDL_MixAudio(stream, sysaudio.audioCvt.buf, len, SDL_MIX_MAXVOLUME);
 	}
 }
 
@@ -598,10 +616,18 @@ void I_ShutdownSound(void)
 		Z_Free(tmpMixBuffer);
 		tmpMixBuffer=NULL;
 	}
+
+	if (tmpMixBuffer2) {
+		Z_Free(tmpMixBuffer2);
+		tmpMixBuffer2=NULL;
+	}
 }
 
 void I_InitSound(void)
 { 
 	tmpMixBuffLen = sysaudio.obtained.samples * 2 * sizeof(Sint32);
 	tmpMixBuffer = Z_Malloc(tmpMixBuffLen, PU_STATIC, 0);
+	if (sysaudio.convert) {
+		tmpMixBuffer2 = Z_Malloc(tmpMixBuffLen>>1, PU_STATIC, 0);
+	}
 }

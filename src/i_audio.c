@@ -101,6 +101,8 @@ void I_InitAudio(void)
 	if (!sysaudio.enabled)
 		return;
 
+	sysaudio.convert = false;
+
 #ifdef ENABLE_SDLMIXER
 	{
 		int freq, channels;
@@ -134,6 +136,15 @@ void I_InitAudio(void)
 		I_Error("Could not open audio: %s\n", SDL_GetError());
 	}
 
+	if ((sysaudio.obtained.format != AUDIO_S16SYS) || (sysaudio.obtained.channels != 2)) {
+		if (SDL_BuildAudioCVT(&sysaudio.audioCvt,
+			AUDIO_S16SYS, 2, sysaudio.obtained.freq,
+			sysaudio.obtained.format, sysaudio.obtained.channels, sysaudio.obtained.freq) == -1) {
+			I_Error("Could not create audio converter\n");
+		}
+		sysaudio.convert = true;
+	}
+
 	I_InitMusic();
 	I_InitSound();
 
@@ -149,7 +160,7 @@ void I_InitAudio(void)
 		deviceName[sizeof(deviceName)-1]='\0';
 		
 	fprintf(stderr, "Audio device: %s, %d Hz, %d bits, %d channels\n",
-	/*, %d frames, %d bytes*/
+/*	", %d frames, %d bytes\n",*/
 		deviceName,
 		sysaudio.obtained.freq,
 		sysaudio.obtained.format & 0xff,
