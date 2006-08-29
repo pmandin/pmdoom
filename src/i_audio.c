@@ -122,6 +122,15 @@ void I_InitAudio(void)
 		sysaudio.obtained.format = format;
 		sysaudio.obtained.size = (SAMPLECOUNT*channels*((format&0xff)>>3));
 
+		if ((sysaudio.obtained.format != AUDIO_S16SYS) || (sysaudio.obtained.channels != 2)) {
+			if (SDL_BuildAudioCVT(&sysaudio.audioCvt,
+				AUDIO_S16SYS, 2, sysaudio.obtained.freq,
+				sysaudio.obtained.format, sysaudio.obtained.channels, sysaudio.obtained.freq) == -1) {
+				I_Error("Could not create audio converter\n");
+			}
+			sysaudio.convert = true;
+		}
+
 		I_InitMusic();
 		I_InitSound();
 

@@ -427,6 +427,7 @@ int I_SoundIsPlaying(int handle)
 void I_UpdateSound(void *unused, Uint8 *stream, int len)
 {
 	int i, chan, srclen;
+	boolean mixToFinal = true;
 	Sint32 *source;
 	Sint16 *dest;
 
@@ -539,33 +540,56 @@ void I_UpdateSound(void *unused, Uint8 *stream, int len)
 	source = tmpMixBuffer;	
 	if (sysaudio.convert) {
 		dest = (Sint16 *) tmpMixBuffer2;
+		mixToFinal = false;
 	} else {
 		dest = (Sint16 *) stream;
-	}
-	for (i=0; i<srclen>>2; i++) {
-		Sint32 dl, dr;
-
-#ifdef ENABLE_SDLMIXER
-		dl = *source++ + dest[0];
-		dr = *source++ + dest[1];
-#else
-		dl = *source++;
-		dr = *source++;
+#ifndef ENABLE_SDLMIXER
+		mixToFinal = false;
 #endif
+	}
 
-		if (dl > 0x7fff)
-			dl = 0x7fff;
-		else if (dl < -0x8000)
-			dl = -0x8000;
+	if (mixToFinal) {
+		for (i=0; i<srclen>>2; i++) {
+			Sint32 dl, dr;
 
-		*dest++ = dl;
+			dl = *source++ + dest[0];
+			dr = *source++ + dest[1];
 
-		if (dr > 0x7fff)
-			dr = 0x7fff;
-		else if (dr < -0x8000)
-			dr = -0x8000;
+			if (dl > 0x7fff)
+				dl = 0x7fff;
+			else if (dl < -0x8000)
+				dl = -0x8000;
 
-		*dest++ = dr;
+			*dest++ = dl;
+
+			if (dr > 0x7fff)
+				dr = 0x7fff;
+			else if (dr < -0x8000)
+				dr = -0x8000;
+
+			*dest++ = dr;
+		}
+	} else {
+		for (i=0; i<srclen>>2; i++) {
+			Sint32 dl, dr;
+
+			dl = *source++;
+			dr = *source++;
+
+			if (dl > 0x7fff)
+				dl = 0x7fff;
+			else if (dl < -0x8000)
+				dl = -0x8000;
+
+			*dest++ = dl;
+
+			if (dr > 0x7fff)
+				dr = 0x7fff;
+			else if (dr < -0x8000)
+				dr = -0x8000;
+
+			*dest++ = dr;
+		}
 	}
 
 	/* Conversion if needed */
