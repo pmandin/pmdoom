@@ -42,7 +42,7 @@
 
 #include "i_system.h"
 
-#ifdef __MINT__
+#if defined(__MINT__) && !defined(MX_STRAM)
 enum {
 	MX_STRAM=0,
 	MX_TTRAM,
