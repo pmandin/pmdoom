@@ -299,8 +299,8 @@ void I_FinishUpdate (void)
 {
 	int cur_ticks;
 
-    // draws little dots on the bottom of the screen
-    if (devparm)
+	// draws little dots on the bottom of the screen
+	if (devparm)
 		ST_DrawFps(last_fps);
 
 	if (!shadow && SDL_MUSTLOCK(screen)) {
