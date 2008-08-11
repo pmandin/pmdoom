@@ -495,7 +495,7 @@ void I_UpdateSound(void *unused, Uint8 *stream, int len)
 				 	: /* output */
 						"=d"(position), "=d"(stepremainder)
 				 	: /* input */
-						"d"(step_int), "r"(step_frac)
+						"d"(step_int), "r"(step_frac), "d"(position), "d"(stepremainder)
 				 	: /* clobbered registers */
 				 		"cc"
 				);
