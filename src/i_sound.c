@@ -50,12 +50,12 @@ typedef struct {
 	// The channel data pointers, start and end.
 	unsigned char *startp, *end;
 
-	unsigned long length, position;
+	Uint32 length, position;
 
 	// The channel step amount...
-	unsigned int step;
+	Uint32 step;
 	// ... and a 0.16 bit remainder of last step.
-	unsigned int stepremainder;	
+	Uint32 stepremainder;	/* or position.frac for m68k asm rout */
 
 	// Time/gametic that the channel started playing,
 	//  used to determine oldest, which automatically
