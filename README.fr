@@ -16,6 +16,19 @@ ou enregistre) ou de Doom 2.
 	  Si non present, la configuration et les parties sont placees dans le
 	    repertoire courant.
 
+* Fichiers de donnees des jeux:
+
+  Pour un comportement correct, et eviter une mauvaise detection de la version,
+il faut que les fichiers soient nommees de la maniere suivante:
+
+doom.wad	Doom, commercial
+doom1.wad	Doom, shareware
+doomu.wad	Ultimate Doom, commercial
+doom2.wad	Doom 2, commercial
+doom2f.wad	Doom 2 FR, commercial
+plutonia.wad	Doom 2 Plutonia pack, commercial
+tnt.wad		Doom 2 Tnt pack, commercial
+
 * Parametres en ligne de commande:
 
 	'@fichier' ou '-response fichier' pour lire les parametres a partir d'un
@@ -51,3 +64,7 @@ ou enregistre) ou de Doom 2.
 	Reseau: '-network ###'
 		unix:	gestion Unix du reseau (par defaut)
 		sting:	gestion Sting du reseau (Atari seulement)
+
+-- 
+Patrice Mandin <patmandin@gmail.com>
+http://pmandin.atari.org/

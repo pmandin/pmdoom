@@ -13,6 +13,19 @@ You need the PC version of Doom (shareware or registered) or Doom 2.
 	  If set, configuration and saved games are put in $HOME/.doom directory.
 	  If not set, configuration and saved games are put in current directory.
 
+* Game data files:
+
+  For proper behaviour and avoid misdetection, game files must be names like
+this:
+
+doom.wad	Doom, commercial
+doom1.wad	Doom, shareware
+doomu.wad	Ultimate Doom, commercial
+doom2.wad	Doom 2, commercial
+doom2f.wad	Doom 2 FR, commercial
+plutonia.wad	Doom 2 Plutonia pack, commercial
+tnt.wad		Doom 2 Tnt pack, commercial
+
 * Command line parameters:
 
 	'@filename' or '-response filename' to read parameters from a file.
@@ -45,3 +58,7 @@ You need the PC version of Doom (shareware or registered) or Doom 2.
 	Network: '-network ###'
 		unix:	Unix sockets network (default)
 		sting:	Sting sockets network (Atari only)
+
+-- 
+Patrice Mandin <patmandin@gmail.com>
+http://pmandin.atari.org/
