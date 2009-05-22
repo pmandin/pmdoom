@@ -124,10 +124,14 @@ enum {
 	IWAD_NAME_DOOM2F,
 	IWAD_NAME_PLUTONIA,
 	IWAD_NAME_TNT,
+	IWAD_NAME_CUSTOM,
 	IWAD_NAMES_COUNT
 };
 
-static char	*iwad_names[7]={NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+static char	*iwad_names[IWAD_NAMES_COUNT]={
+	NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL
+};
 
 void D_CheckNetGame (void);
 void D_ProcessEvents (void);
@@ -535,35 +539,56 @@ void D_AddFile (char *file)
 		iwad_names[num_name][length-1]='\0';	\
 	}
 
+#define ALLOCATE_IWAD_CUSTOM_NAME(num_name, filename) \
+	{	\
+		int length;	\
+		\
+		length = strlen(filename)+2;	\
+		iwad_names[num_name] = malloc(length); \
+		strcpy(iwad_names[num_name], filename);	\
+		iwad_names[num_name][length-1]='\0';	\
+	}
+
+#define GAME_FILE_DOOM2		"doom2.wad"
+#define GAME_FILE_DOOM2F	"doom2f.wad"
+#define GAME_FILE_DOOMU		"doomu.wad"
+#define GAME_FILE_DOOM		"doom.wad"
+#define GAME_FILE_DOOM1		"doom1.wad"
+#define GAME_FILE_PLUTONIA	"plutonia.wad"
+#define GAME_FILE_TNT		"tnt.wad"
+
 void IdentifyVersion (void)
 {
 	char *home;
 	char *doomwaddir;
+	int p;
+
+	gamemode = indetermined;
 
 	doomwaddir = getenv("DOOMWADDIR");
 	if (!doomwaddir)
 		doomwaddir = ".";
 
 	// Commercial.
-	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOM2, "doom2.wad");
+	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOM2, GAME_FILE_DOOM2);
 
 	// French version
-	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOM2F, "doom2f.wad");
+	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOM2F, GAME_FILE_DOOM2F);
 
 	// Retail.
-	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOMU, "doomu.wad");
+	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOMU, GAME_FILE_DOOMU);
 
-    // Registered.
-	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOM, "doom.wad");
+	// Registered.
+	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOM, GAME_FILE_DOOM);
 
-    // Shareware.
-	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOM1, "doom1.wad");
+	// Shareware.
+	ALLOCATE_IWAD_NAME(IWAD_NAME_DOOM1, GAME_FILE_DOOM1);
 
 	// Plutonia pack
-	ALLOCATE_IWAD_NAME(IWAD_NAME_PLUTONIA, "plutonia.wad");
+	ALLOCATE_IWAD_NAME(IWAD_NAME_PLUTONIA, GAME_FILE_PLUTONIA);
 	
 	// Tnt pack
-	ALLOCATE_IWAD_NAME(IWAD_NAME_TNT, "tnt.wad");
+	ALLOCATE_IWAD_NAME(IWAD_NAME_TNT, GAME_FILE_TNT);
 
 
 	home = getenv("HOME");
@@ -576,17 +601,19 @@ void IdentifyVersion (void)
 		sprintf(basedefault, "%s/.doom/doom.cfg", home);
 	}
 
+	p = M_CheckParm("-iwad");
+
 	if (M_CheckParm ("-shdev")) {
 		gamemode = shareware;
 		devparm = true;
-		D_AddFile (DEVDATA"doom1.wad");
+		D_AddFile (DEVDATA GAME_FILE_DOOM1);
 		D_AddFile (DEVMAPS"data_se/texture1.lmp");
 		D_AddFile (DEVMAPS"data_se/pnames.lmp");
 		strcpy (basedefault,DEVDATA"default.cfg");
 	} else if (M_CheckParm ("-regdev")) {
 		gamemode = registered;
 		devparm = true;
-		D_AddFile (DEVDATA"doom.wad");
+		D_AddFile (DEVDATA GAME_FILE_DOOM);
 		D_AddFile (DEVMAPS"data_se/texture1.lmp");
 		D_AddFile (DEVMAPS"data_se/texture2.lmp");
 		D_AddFile (DEVMAPS"data_se/pnames.lmp");
@@ -596,15 +623,54 @@ void IdentifyVersion (void)
 		devparm = true;
 		/* I don't bother
 		if(plutonia)
-			D_AddFile (DEVDATA"plutonia.wad");
+			D_AddFile (DEVDATA GAME_FILE_PLUTONIA);
 		else if(tnt)
-			D_AddFile (DEVDATA"tnt.wad");
+			D_AddFile (DEVDATA GAME_FILE_TNT);
 		else*/
-			D_AddFile (DEVDATA"doom2.wad");
+			D_AddFile (DEVDATA GAME_FILE_DOOM2);
 
 		D_AddFile (DEVMAPS"cdata/texture1.lmp");
 		D_AddFile (DEVMAPS"cdata/pnames.lmp");
 		strcpy (basedefault,DEVDATA"default.cfg");
+	} else if (p && (p<myargc-1)) {
+		char *posname;
+
+		ALLOCATE_IWAD_CUSTOM_NAME(IWAD_NAME_CUSTOM, myargv[p+1]);
+
+		posname = strrchr(iwad_names[IWAD_NAME_CUSTOM], '/');
+		if (!posname) {
+			posname = strrchr(iwad_names[IWAD_NAME_CUSTOM], '\\');
+			if (!posname) {
+				posname = iwad_names[IWAD_NAME_CUSTOM];
+			} else {
+				++posname;
+			}
+		} else {
+			++posname;
+		}
+
+		if (strcasecmp(posname, GAME_FILE_DOOM2)==0) {
+			gamemode = commercial;
+		} else if (strcasecmp(posname, GAME_FILE_DOOM2F)==0) {
+			gamemode = commercial;
+			language = french;
+			printf("French version\n");
+		} else if (strcasecmp(posname, GAME_FILE_PLUTONIA)==0) {
+			gamemode = commercial;
+		} else if (strcasecmp(posname, GAME_FILE_TNT)==0) {
+			gamemode = commercial;
+		} else if (strcasecmp(posname, GAME_FILE_DOOMU)==0) {
+			gamemode = retail;
+		} else if (strcasecmp(posname, GAME_FILE_DOOM)==0) {
+			gamemode = registered;
+		} else if (strcasecmp(posname, GAME_FILE_DOOM1)==0) {
+			gamemode = shareware;
+		}
+
+		if (gamemode != indetermined) {
+			D_AddFile (iwad_names[IWAD_NAME_CUSTOM]);
+		}
+
 	} else if ( !access (iwad_names[IWAD_NAME_DOOM2F],R_OK) ) {
 		gamemode = commercial;
 		// C'est ridicule!
@@ -632,7 +698,6 @@ void IdentifyVersion (void)
 		D_AddFile (iwad_names[IWAD_NAME_DOOM1]);
 	} else {
 		printf("Game mode indeterminate.\n");
-		gamemode = indetermined;
 		// We don't abort. Let's see what the PWAD contains.
 		//exit(1);
 	}

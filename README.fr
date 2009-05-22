@@ -50,6 +50,8 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	  par defaut, soit 8 Mo).
 	'-yieldcpu [on|off]' pour liberer le CPU de temps en temps (par defaut
 	  off sur Atari, on sur les autres systemes).
+	'-iwad /path/to/filename.wad' si le fichier de donnees du jeu ne se
+	  trouve pas dans le repertoire courant.
 
 	Utilisez Alt+Enter pour passer du mode plein ecran au mode fenetre.
 	Utilisez Alt+G pour capturer ou liberer la souris.
