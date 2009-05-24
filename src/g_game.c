@@ -1250,7 +1250,7 @@ void G_DoSaveGame (void)
 	}
     description = savedescription; 
 	 
-    save_p = savebuffer = screens[1]+0x4000; 
+    save_p = savebuffer = Z_Malloc(SAVEGAMESIZE, PU_STATIC, 0);
 	 
     memcpy (save_p, description, SAVESTRINGSIZE); 
     save_p += SAVESTRINGSIZE; 
@@ -1283,6 +1283,8 @@ void G_DoSaveGame (void)
     savedescription[0] = 0;		 
 	 
     players[consoleplayer].message = GGSAVED; 
+
+    Z_Free (savebuffer); 
 
     // draw the pattern into the back screen
     R_FillBackScreen ();	
