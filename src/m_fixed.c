@@ -76,7 +76,9 @@ FixedDiv2Soft
     return (fixed_t) c;
 }
 
-#if defined(__GNUC__) && (defined(__M68000__) || defined(__M68020__))
+#if defined(__GNUC__) \
+	&& (defined(__M68000__) || defined(__M68020__)) \
+	&& !defined(__mcoldfire__)
 
 #define asm_mul_int(a,b) \
 ({	\
