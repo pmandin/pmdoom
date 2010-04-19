@@ -11,6 +11,7 @@ AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
 
 # Checks for programs.
 AC_PROG_CC
+AM_PROG_AS
 
 # Checks for header files.
 AC_HEADER_STDC
