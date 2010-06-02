@@ -1,3 +1,11 @@
+/*
+	RGB2YUV conversion functions
+	taken from SDL test program testoverlay.c
+
+*/
+
+#include <SDL.h>
+
 static inline void RGBtoYUV(Uint8 *rgb, int *yuv)
 {
 #if 1

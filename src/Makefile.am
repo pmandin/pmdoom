@@ -25,6 +25,6 @@ doom_SOURCES = am_map.c d_items.c d_main.c d_net.c doomstat.c \
 	r_segs.c r_sky.c r_things.c sounds.c s_sound.c st_lib.c st_stuff.c \
 	tables.c v_video.c wi_stuff.c w_wad.c z_zone.c i_audio.c i_music.c \
 	i_net_unix.c i_net_sting.c i_qmus2mid.c \
-	i_rgb2yuv.h m_fixed_020.S m_fixed_060.S
+	i_rgb2yuv.c m_fixed_020.S m_fixed_060.S
 
 EXTRA_DIST = $(header_files)

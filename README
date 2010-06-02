@@ -46,6 +46,7 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	 and on for other systems).
 	'-iwad /path/to/filename.wad' if game data file is not in current
 	  directory.
+	'-overlay' use SDL YUV Overlay if available to scale screen.
 
 	Use Alt+Enter to toggle between fullscreen and windowed mode.
 	Use Alt+G to toggle mouse grabbing.
