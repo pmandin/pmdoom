@@ -608,6 +608,8 @@ void I_InitGraphics(void)
 		scr_flags |= SDL_FULLSCREEN;
 	if (sysvideo.resize)
 		scr_flags |= SDL_RESIZABLE;
+	if (sysvideo.overlay && (sysvideo.bpp==8))
+		sysvideo.bpp = 32;
 
 	InitSdlMode(sysvideo.width, sysvideo.height, sysvideo.bpp);
 
