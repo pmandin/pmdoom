@@ -322,12 +322,28 @@ void I_FinishUpdate (void)
 
 	if (sysvideo.overlay) {
 		SDL_Rect ov_rect;
+		int dstw = (screen->h * SCREENWIDTH) / SCREENHEIGHT;
+		int dsth = (screen->w * SCREENHEIGHT) / SCREENWIDTH;
+
+		if (dstw > screen->w) {
+			dstw = screen->w;
+		} else if (dsth > screen->h) {
+			dsth = screen->h;
+		}
+
+		if (screen->w > dstw) {
+			ov_rect.x = (screen->w - dstw)>>1;
+			ov_rect.y = 0;
+			ov_rect.w = dstw;
+			ov_rect.h = screen->h;
+		} else {
+			ov_rect.x = 0;
+			ov_rect.y = (screen->h - dsth)>>1;
+			ov_rect.w = screen->w;
+			ov_rect.h = dsth;
+		}
 
 		SDL_BlitSurface(shadow, NULL, shadow_overlay, NULL);
-
-		ov_rect.x = ov_rect.y = 0;
-		ov_rect.w = screen->w;
-		ov_rect.h = screen->h;
 
                 switch (overlay_format)
                 {
