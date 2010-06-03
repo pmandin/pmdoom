@@ -343,26 +343,47 @@ void I_FinishUpdate (void)
 			ov_rect.h = dsth;
 		}
 
+#if 0
 		SDL_BlitSurface(shadow, NULL, shadow_overlay, NULL);
 
                 switch (overlay_format)
                 {
                     case SDL_YUY2_OVERLAY:
-                         I_RGBtoYUY2(shadow_overlay, overlay);
+                         I_RGB32toYUY2(shadow_overlay, overlay);
                          break;
                     case SDL_YV12_OVERLAY:
-                         I_RGBtoYV12(shadow_overlay, overlay);
+                         I_RGB32toYV12(shadow_overlay, overlay);
                          break;
                     case SDL_UYVY_OVERLAY:
-                         I_RGBtoUYVY(shadow_overlay, overlay);
+                         I_RGB32toUYVY(shadow_overlay, overlay);
                          break;
                     case SDL_YVYU_OVERLAY:
-                         I_RGBtoYVYU(shadow_overlay, overlay);
+                         I_RGB32toYVYU(shadow_overlay, overlay);
                          break;
                     case SDL_IYUV_OVERLAY:
-                         I_RGBtoIYUV(shadow_overlay, overlay);
+                         I_RGB32toIYUV(shadow_overlay, overlay);
                          break;
                 }
+#else
+                switch (overlay_format)
+                {
+                    case SDL_YUY2_OVERLAY:
+                         I_RGB8toYUY2(shadow, overlay);
+                         break;
+                    case SDL_YV12_OVERLAY:
+                         I_RGB8toYV12(shadow, overlay);
+                         break;
+                    case SDL_UYVY_OVERLAY:
+                         I_RGB8toUYVY(shadow, overlay);
+                         break;
+                    case SDL_YVYU_OVERLAY:
+                         I_RGB8toYVYU(shadow, overlay);
+                         break;
+                    case SDL_IYUV_OVERLAY:
+                         I_RGB8toIYUV(shadow, overlay);
+                         break;
+                }
+#endif
 
                 SDL_DisplayYUVOverlay(overlay, &ov_rect);
 	} else {
@@ -465,8 +486,12 @@ void I_SetPalette (byte* palette)
 
 	if (shadow)
 		SDL_SetColors(shadow, colors, 0,256);
-	if (shadow_overlay)
-		SDL_SetColors(shadow_overlay, colors, 0,256);
+	if (sysvideo.overlay) {
+		if (shadow_overlay) {
+			SDL_SetColors(shadow_overlay, colors, 0,256);
+		}
+		I_Pal2Yuv(colors);
+	}
 	SDL_SetPalette(screen, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, 256);
 }
 
@@ -533,6 +558,7 @@ static void InitSdlMode(int width, int height, int bpp)
 		}
 
 		if (sysvideo.overlay) {
+#if 0
 			Uint32 rmask,gmask,bmask;
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
 			rmask=255<<0;
@@ -549,6 +575,7 @@ static void InitSdlMode(int width, int height, int bpp)
 					rmask,gmask,bmask,0);
 			if (!shadow_overlay)
 			    I_Error("Can not create shadow surface for overlay: %s\n", SDL_GetError());
+#endif
 
 			if (!shadow)
 				shadow = SDL_CreateRGBSurface(SDL_SWSURFACE,SCREENWIDTH,SCREENHEIGHT,8,0,0,0,0);
