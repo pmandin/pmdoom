@@ -465,6 +465,8 @@ void I_SetPalette (byte* palette)
 
 static void InitSdlMode(int width, int height, int bpp)
 {
+	SDL_Surface *output_surf;
+
 	if (bpp<8)
 		bpp=8;
 
@@ -509,12 +511,7 @@ static void InitSdlMode(int width, int height, int bpp)
 		mouse_grab = SDL_WM_GrabInput(mouse_grab);	
 	}
 
-	update_area.x = 0;
-	update_area.y = 0;
-	update_area.w = screen->w;
-	update_area.h = screen->h;
-
-	I_SetPalette(NULL);
+	output_surf = screen;
 
 	if (sysvideo.overlay) {
 		/* Create/refresh SDL overlay */
@@ -531,12 +528,7 @@ static void InitSdlMode(int width, int height, int bpp)
 			if (!shadow)
 			    I_Error("Can not create shadow surface: %s\n", SDL_GetError());
 
-		 	screens[0] = shadow->pixels;
-
-			sysvideo.width = shadow->w;
-			sysvideo.height = shadow->h;
-			sysvideo.pitch = shadow->pitch;
-			sysvideo.bpp = shadow->format->BitsPerPixel;
+		 	output_surf = shadow;
 		}
 	}
 
@@ -546,30 +538,53 @@ static void InitSdlMode(int width, int height, int bpp)
 				SDL_FreeSurface(shadow);
 				shadow=NULL;
 			}
-
-		 	screens[0] = screen->pixels;
-
-			sysvideo.width = screen->w;
-			sysvideo.height = screen->h;
-			sysvideo.pitch = screen->pitch;
-			sysvideo.bpp = screen->format->BitsPerPixel;
 		} else {
 			if (!shadow)
 				shadow = SDL_CreateRGBSurface(SDL_SWSURFACE,screen->w,screen->h,8,0,0,0,0);
 			if (!shadow)
 			    I_Error("Can not create shadow surface: %s\n", SDL_GetError());
 
-		 	screens[0] = shadow->pixels;
-
-			sysvideo.width = shadow->w;
-			sysvideo.height = shadow->h;
-			sysvideo.pitch = shadow->pitch;
-			sysvideo.bpp = shadow->format->BitsPerPixel;
+			output_surf = shadow;
 		}
 	}
 
 	if (!sysvideo.overlay && !shadow && SDL_MUSTLOCK(screen)) {
 		SDL_LockSurface(screen);
+	}
+
+	/* Preserve aspect ratio */
+	{
+		int srcw = output_surf->w;
+		int srch = output_surf->h;
+		int dstw = (srch * SCREENWIDTH) / SCREENHEIGHT;
+		int dsth = (srcw * SCREENHEIGHT) / SCREENWIDTH;
+
+		if (dstw > srcw) {
+			dstw = srcw;
+		} else if (dsth > srch) {
+			dsth = srch;
+		}
+
+		if (srcw > dstw) {
+			update_area.x = (srcw - dstw)>>1;
+			update_area.y = 0;
+			update_area.w = dstw;
+			update_area.h = srch;
+		} else {
+			update_area.x = 0;
+			update_area.y = (srch - dsth)>>1;
+			update_area.w = srcw;
+			update_area.h = dsth;
+		}
+
+	 	screens[0] = output_surf->pixels;
+		screens[0] += update_area.y * output_surf->pitch;
+		screens[0] += update_area.x;
+
+		sysvideo.width = update_area.w;
+		sysvideo.height = update_area.h;
+		sysvideo.pitch = output_surf->pitch;
+		sysvideo.bpp = output_surf->format->BitsPerPixel;
 	}
 
 	I_SetPalette(NULL);
