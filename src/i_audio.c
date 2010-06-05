@@ -47,7 +47,7 @@ sysaudio_t	sysaudio;
 //  the size of the 16bit, 2 hardware channel (stereo)
 //  mixing buffer, and the samplerate of the raw data.
 
-#define SAMPLECOUNT		256
+#define SAMPLECOUNT		512
 #define SAMPLERATE		11025	// Hz
 
 //
