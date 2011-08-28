@@ -128,9 +128,7 @@ void R_DrawColumn (void)
 	//  e.g. a DDA-lile scaling.
 	// This is as fast as it gets.
 
-#if defined(__GNUC__) \
-	&& (defined(__M68000__) || defined(__M68020__)) \
-	&& !defined(__mcoldfire__)
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__))
 
     __asm__ __volatile__ (
 	"moveql	#127,d0\n"
@@ -244,9 +242,7 @@ void R_DrawColumn060 (void)
 	frac <<= 16-7;
 	rshift = 32-7;
 
-#if defined(__GNUC__) \
-	&& (defined(__M68000__) || defined(__M68020__)) \
-	&& !defined(__mcoldfire__)
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__))
 
     __asm__ __volatile__ (
 "	moveql	#0,d1\n"
@@ -528,9 +524,7 @@ void R_DrawTranslatedColumn (void)
 
     // Here we do an additional index re-mapping.
 
-#if defined(__GNUC__) \
-	&& (defined(__M68000__) || defined(__M68020__)) \
-	&& !defined(__mcoldfire__)
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__))
 
     __asm__ __volatile__ (
 	"moveql	#127,d0\n"
@@ -748,9 +742,7 @@ void R_DrawSpan (void)
 	// We do not check for zero spans here?
 	count = ds_x2 - ds_x1; 
 
-#if defined(__GNUC__) \
-	&& (defined(__M68000__) || defined(__M68020__)) \
-	&& !defined(__mcoldfire__)
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__))
 
 	{
 		long uv, uvstep;
@@ -887,9 +879,7 @@ void R_DrawSpanLow (void)
 
 	count = ds_x2 - ds_x1; 
 
-#if defined(__GNUC__) \
-	&& (defined(__M68000__) || defined(__M68020__)) \
-	&& !defined(__mcoldfire__)
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__))
 
 	{
 		long uv, uvstep;
