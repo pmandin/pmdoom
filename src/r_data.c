@@ -181,9 +181,9 @@ R_DrawColumnInCache
     int		count;
     int		position;
     byte*	source;
-    byte*	dest;
+/*    byte*	dest;
 	
-    dest = (byte *)cache + 3;
+    dest = (byte *)cache + 3;*/
 	
     while (patch->topdelta != 0xff)
     {
