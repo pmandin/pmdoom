@@ -42,15 +42,6 @@
 
 #include "i_system.h"
 
-#if defined(__MINT__) && !defined(MX_STRAM)
-enum {
-	MX_STRAM=0,
-	MX_TTRAM,
-	MX_PREFSTRAM,
-	MX_PREFTTRAM
-};
-#endif
-
 sysgame_t	sysgame={DEFAULT_HEAP_SIZE,NULL,false};
 
 static void I_InitFpu(void);
