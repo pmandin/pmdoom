@@ -7,6 +7,7 @@
 - Fix compilation for Coldfire CPU.
 - Fix compilation for gcc 4.
 - Add SDL YUV Overlay support.
+- Added '-musexport' command line option to export music as MIDI files.
 
 -------------------------------- 0.56 -----------------------------------
 

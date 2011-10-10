@@ -54,6 +54,7 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	  trouve pas dans le repertoire courant.
 	'-overlay' utilise l'overlay video YUV de SDL si disponible pour
 	  agrandir l'ecran.
+	'-musexport' exporte les musiques en fichiers MIDI.
 
 	Utilisez Alt+Enter pour passer du mode plein ecran au mode fenetre.
 	Utilisez Alt+G pour capturer ou liberer la souris.

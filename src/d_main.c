@@ -55,6 +55,7 @@
 #include "i_video.h"
 #include "i_net.h"
 #include "i_audio.h"
+#include "i_music.h"
 
 #include "g_game.h"
 
@@ -1211,6 +1212,14 @@ void D_DoomMain (void)
 	autostart = true;
     }
 	
+    p = M_CheckParm ("-musexport");
+    if (p)
+    {
+	/* Export MUS files */
+	I_ExportMusic();
+	I_Quit();
+    }
+
     p = M_CheckParm ("-playdemo");
     if (p && p < myargc-1)
     {
