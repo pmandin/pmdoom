@@ -63,6 +63,11 @@ tnt.wad		Doom 2 Tnt pack, commercial
 		unix:	Unix sockets network (default)
 		sting:	Sting sockets network (Atari only)
 
+* Burn music on CD:
+	Use 'timidity -Ov1S *.mid' to convert to Ogg files.
+	Use 'timidity -Ow1S *.mid' to convert to Wav files.
+	You can burn each music on CD on its own track.
+
 -- 
 Patrice Mandin <patmandin@gmail.com>
 http://pmandin.atari.org/
