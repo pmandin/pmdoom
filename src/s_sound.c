@@ -25,6 +25,7 @@
 #include "i_sound.h"
 #include "i_music.h"
 #include "i_audio.h"
+#include "i_cdmus.h"
 #include "sounds.h"
 #include "s_sound.h"
 
@@ -114,7 +115,7 @@ int			numChannels;
 
 static int		nextcleanup;
 
-
+static int	curcdmus = -1;
 
 //
 // Internals.
@@ -135,6 +136,7 @@ S_AdjustSoundParams
 
 void S_StopChannel(int cnum);
 
+void I_UpdateCDMusic(void);
 
 
 //
@@ -177,6 +179,10 @@ void S_Init
   // Note that sounds have not been cached (yet).
   for (i=1 ; i<NUMSFX ; i++)
     S_sfx[i].lumpnum = S_sfx[i].usefulness = -1;
+
+	if (i_CDMusic) {
+		i_CDMusic = (I_CDMusInit() != -1);
+	}
 }
 
 
@@ -455,6 +461,10 @@ void S_StopSound(void *origin)
 //
 void S_PauseSound(void)
 {
+	if (i_CDMusic) {
+		I_CDMusStop();
+		return;
+	}
 	if (mus_playing && !mus_paused) {
 		I_PauseSong(mus_playing->handle);
 		mus_paused = true;
@@ -463,6 +473,10 @@ void S_PauseSound(void)
 
 void S_ResumeSound(void)
 {
+	if (i_CDMusic) {
+		I_CDMusResume();
+		return;
+	}
 	if (mus_playing && mus_paused) {
 		I_ResumeSong(mus_playing->handle);
 		mus_paused = false;
@@ -484,6 +498,10 @@ void S_UpdateSounds(void* listener_p)
 
 	if (!sysaudio.enabled)
 		return;
+
+	if (i_CDMusic) {
+		I_UpdateCDMusic();
+	}
 
 	listener = (mobj_t*)listener_p;
 
@@ -546,15 +564,18 @@ void S_UpdateSounds(void* listener_p)
 
 void S_SetMusicVolume(int volume)
 {
-    if (volume < 0 || volume > 127)
+    if (volume < 0 || volume > 15)
     {
 	I_Error("Attempt to set music volume at %d",
 		volume);
     }    
 
-    I_SetMusicVolume(127);
-    I_SetMusicVolume(volume);
-    snd_MusicVolume = volume;
+	if (i_CDMusic) {
+		I_CDMusSetVolume((volume*255)/15); /* 0-255 */
+	} else {
+		I_SetMusicVolume(volume);
+	}
+	snd_MusicVolume = volume;
 }
 
 
@@ -562,7 +583,7 @@ void S_SetMusicVolume(int volume)
 void S_SetSfxVolume(int volume)
 {
 
-    if (volume < 0 || volume > 127)
+    if (volume < 0 || volume > 15)
 	I_Error("Attempt to set sfx volume at %d", volume);
 
     snd_SfxVolume = volume;
@@ -592,6 +613,29 @@ S_ChangeMusic
 
 	if (mus_playing == music)
 		return;
+
+	if (i_CDMusic) {
+		int track;
+		if (i_CDTrack) {
+			track = i_CDTrack;
+		} else {
+			track = I_CDMusFirstTrack()+musicnum-1;
+		}
+		if (track == i_CDCurrentTrack && i_CDMusicLength > 0) {
+			return;
+		}
+		if (!I_CDMusPlay(track)) {
+			if (looping) {
+				i_CDMusicLength = 35*I_CDMusTrackLength(track);
+				oldTic = gametic;
+			} else {
+				i_CDMusicLength = -1;
+			}
+			i_CDCurrentTrack = track;
+		}
+		curcdmus = musicnum;
+		return;
+	}
 
 	// shutdown old music
 	S_StopMusic();
@@ -788,4 +832,29 @@ S_getChannel
 	c->origin = origin;
 
 	return cnum;
+}
+
+//==========================================================================
+//
+// I_UpdateCDMusic
+//
+// Updates playing time for current track, and restarts the track, if
+// needed
+//
+//==========================================================================
+
+void I_UpdateCDMusic(void)
+{
+	extern boolean menuactive;
+
+	if(/*MusicPaused ||*/ i_CDMusicLength < 0
+	|| (paused && !menuactive))
+	{ // Non-looping song/song paused
+		return;
+	}
+	i_CDMusicLength -= gametic-oldTic;
+	oldTic = gametic;
+	if ((i_CDMusicLength <= 0) && (curcdmus!=-1)) {
+		S_ChangeMusic(curcdmus, true);
+	}
 }

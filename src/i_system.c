@@ -36,6 +36,7 @@
 #include "i_video.h"
 #include "i_audio.h"
 #include "i_net.h"
+#include "i_cdmus.h"
 
 #include "d_net.h"
 #include "g_game.h"
@@ -144,9 +145,14 @@ void I_Init (void)
 #endif
 
 	I_InitFpu();
-
 	I_InitAudio();
 	//  I_InitGraphics();
+	if (i_CDMusic) {
+		if (I_CDMusInit() == -1) {
+			fprintf(stderr, "Can not use CD for music replay\n");
+			i_CDMusic = false;
+		}
+	}
 }
 
 static void I_InitFpu(void)
@@ -193,6 +199,9 @@ static void I_InitFpu(void)
 
 static void I_Shutdown(void)
 {
+	if (i_CDMusic) {
+		I_CDMusShutdown();
+	}
 	I_ShutdownNetwork();
 	I_ShutdownAudio();
 	I_ShutdownGraphics();

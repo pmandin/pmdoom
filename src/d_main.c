@@ -56,6 +56,7 @@
 #include "i_net.h"
 #include "i_audio.h"
 #include "i_music.h"
+#include "i_cdmus.h"
 
 #include "g_game.h"
 
@@ -864,6 +865,11 @@ void D_DoomMain (void)
 		sysgame.kb_used = atoi(myargv[p+1]);
 		if (sysgame.kb_used<MINIMAL_HEAP_SIZE)
 			sysgame.kb_used=MINIMAL_HEAP_SIZE;
+	}
+
+	p=M_CheckParm ("-cdmusic");
+	if (p && (gamemode!=commercial)) {
+		i_CDMusic = true;
 	}
 
     nomonsters = M_CheckParm ("-nomonsters");
