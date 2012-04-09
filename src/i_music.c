@@ -261,7 +261,7 @@ void I_ExportMusic(void)
 
 		src = SDL_RWFromMem(mus_data, mus_length);
 		mus_length = qmus2mid(mus_data, mus_length, src, 1,0,0,0);
-		if (midifile_length<0) {
+		if (mus_length<0) {
 			printf("failed\n");
 		} else {
 			dst = SDL_RWFromFile(dstname, "w");
