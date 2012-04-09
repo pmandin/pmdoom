@@ -36,7 +36,8 @@ socket strcasecmp strerror strncasecmp strupr])
 case "$host" in
 	m68k*)
 		AC_CHECK_DEFINE([__m68k__], [],
-			[CFLAGS="$CFLAGS -D__m68k__"]
+			[CFLAGS="$CFLAGS -D__m68k__"
+			CCASFLAGS="$CCASFLAGS -D__m68k__"]
 		)
 		;;
 	*)
