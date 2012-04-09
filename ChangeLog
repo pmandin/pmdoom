@@ -8,6 +8,7 @@
 - Fix compilation for gcc 4.
 - Add SDL YUV Overlay support.
 - Added '-musexport' command line option to export music as MIDI files.
+- Doom 1: Added '-cdmusic' command line option to play music from audio CD.
 
 -------------------------------- 0.56 -----------------------------------
 
