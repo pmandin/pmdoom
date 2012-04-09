@@ -75,6 +75,43 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	- 'timidity -Ow1S *.mid' pour convertir en fichier Wav.
 	Vous pouvez graver chaque musique sur CD, chacune sa propre piste.
 
+	Graver dans l'ordre suivant:
+
+	Doom
+	01:37	d_e1m1
+	02:37	d_e1m2
+	04:50	d_e1m3
+	03:32	d_e1m4
+	02:45	d_e1m5
+	01:25	d_e1m6
+	02:32	d_e1m7
+	02:33	d_e1m8
+	02:18	d_e1m9
+	03:15	d_e2m1
+	02:35	d_e2m2
+	03:20	d_e2m3
+	04:12	d_e2m4
+	02:32	d_e2m5
+	02:59	d_e2m6
+	01:47	d_e2m7
+	02:56	d_e2m8
+	01:38	d_e2m9
+	01:38	d_e3m1
+	03:23	d_e3m2
+	06:01	d_e3m3
+	02:33	d_e3m4
+	02:32	d_e3m5
+	01:25	d_e3m6
+	01:47	d_e3m7
+	01:37	d_e3m8
+	02:18	d_e3m9
+	03:20	d_inter
+	00:08	d_intro
+	01:04	d_bunny
+	03:15	d_victor
+	00:11	d_introa
+	80:50	Total
+
 -- 
 Patrice Mandin <patmandin@gmail.com>
 http://pmandin.atari.org/
