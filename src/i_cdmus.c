@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#ifdef __MINT__
+#include <mint/cdromio.h>
+#include <mint/metados.h>
+#endif
 
 #include <SDL.h>
 
@@ -174,6 +178,26 @@ int I_CDMusResume(void)
 
 int I_CDMusSetVolume(int volume)
 {
+#ifdef __MINT__
+	const char *name;
+	int retval;
+	struct cdrom_volctrl volctrl;
+
+	if (sdlcd==NULL)
+		return -1;
+
+	/* SDL does not support changing volume, so we do it through Metados */
+	name = SDL_CDName(0);
+
+	volctrl.channel0 = volctrl.channel1 =
+		volctrl.channel2 = volctrl.channel3 =
+		volume;
+
+	retval = Metaioctl(name[0], METADOS_IOCTL_MAGIC, CDROMVOLCTRL, &volctrl);
+	if (retval>=0)
+		return 0;
+#endif
+
 	return -1;
 }
 

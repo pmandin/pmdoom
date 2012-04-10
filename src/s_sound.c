@@ -571,7 +571,8 @@ void S_SetMusicVolume(int volume)
     }    
 
 	if (i_CDMusic) {
-		I_CDMusSetVolume((volume*255)/15); /* 0-255 */
+		if (I_CDMusSetVolume((volume*255)/15) == -1)
+			return;
 	} else {
 		I_SetMusicVolume(volume);
 	}
