@@ -56,7 +56,8 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	  agrandir l'ecran.
 	'-musexport' exporte les musiques en fichiers MIDI.
 	'-cdmusic' pour jouer les musiques a partir d'un CD Audio. Note: le
-	  changement de volume du CD Audio depuis le menu n'est pas gere.
+	  changement de volume du CD Audio depuis le menu n'est gere que sur
+	  Atari.
 	  Note 2: fonctionne seulement pour Doom, pas pour Doom 2.
 
 	Utilisez Alt+Enter pour passer du mode plein ecran au mode fenetre.

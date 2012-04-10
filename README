@@ -49,7 +49,8 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	'-overlay' use SDL YUV Overlay if available to scale screen.
 	'-musexport' exports music as MIDI files.
 	'-cdmusic' to replay music from Audio CD. Note: volume change from menu
-	  is not usable. Note 2: only works for Doom currently, not Doom 2.
+	  is usable only on Atari.
+	  Note 2: only works for Doom currently, not Doom 2.
 
 	Use Alt+Enter to toggle between fullscreen and windowed mode.
 	Use Alt+G to toggle mouse grabbing.
