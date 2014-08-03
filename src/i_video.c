@@ -65,12 +65,7 @@ int num_joystick;	/* from doomrc file */
 sysvideo_t sysvideo =
 {
 	SCREENWIDTH, SCREENHEIGHT, 8, SCREENWIDTH,
-	false, false, true, false,
-#ifdef __MINT__
-	false
-#else
-	true
-#endif
+	false, false, true, false
 };
 
 /*--- Local functions ---*/
@@ -393,9 +388,7 @@ void I_FinishUpdate (void)
 		fps=0;
 	}
 
-	if (sysvideo.yield_cpu) {
-		I_WaitVBL(1);
-	}
+	I_WaitVBL(1);
 
 	if (new_width && new_height) {
 		InitSdlMode(new_width, new_height, sysvideo.bpp);
