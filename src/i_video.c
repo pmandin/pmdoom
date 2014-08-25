@@ -372,7 +372,7 @@ void I_FinishUpdate (void)
 				screens[0] += update_area.y * screen->pitch;
 				screens[0] += update_area.x;
 
-				R_ExecuteSetViewSize();
+				R_InitBuffer (scaledviewwidth, viewheight);
 				AM_SetViewSize();
 			}
 		}
