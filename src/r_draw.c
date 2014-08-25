@@ -212,7 +212,7 @@ void R_DrawColumn (void)
 void R_DrawColumn060 (void) 
 { 
 	int	count, rshift;
-	byte	*dest, *dest_end;
+	byte	*dest;
 	fixed_t	frac, fracstep;
 
 	// Zero length, column does not exceed a pixel.
@@ -231,7 +231,6 @@ void R_DrawColumn060 (void)
 	// Use ylookup LUT to avoid multiply with ScreenWidth.
 	// Use columnofs LUT for subwindows? 
 	dest = ylookup[dc_yl] + columnofs[dc_x];  
-	dest_end = &dest[count*sysvideo.pitch];
 
 	// Determine scaling,
 	//  which is the only mapping to be done.
@@ -245,28 +244,32 @@ void R_DrawColumn060 (void)
 #if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__))
 
     __asm__ __volatile__ (
-"	moveql	#0,d1\n"
-"	movel	%1,d0\n"
-"	lsrl	%2,d0\n"
+	"moveql	#0,d1\n\t"
+	"movel	%1,d0\n\t"
+	"lsrl	%2,d0\n"
 
-"R_DrawColumn060_loop:\n"
-"	moveb	%3@(0,d0:w),d1\n"
-"	addl	%0,%1\n"
-"	moveb	%4@(0,d1:l),d1\n"
-"	movel	%1,d0\n"
-"	lsrl	%2,d0\n"
-"	moveb	d1,%5@\n"
-"	cmpal	%7,%5\n"
-"	addw	%6,%5\n"
+"R_DrawColumn060_loop:\n\t"
+	"moveb	%3@(0,d0:w),d1\n\t"
+	"addl	%0,%1\n\t"
 
-"	bnes	R_DrawColumn060_loop"
+	"moveb	%4@(0,d1:l),d2\n\t"
+	"movel	%1,d0\n\t"
+
+	"moveb	d2,%5@\n\t"
+	"lsrl	%2,d0\n\t"
+
+	"subqw	#1,%7\n\t"
+	"addal	%6,%5\n\t"
+
+	"bpls	R_DrawColumn060_loop\n"
+
 	 	: /* no return value */
 	 	: /* input */
 	 		"d"(fracstep), "d"(frac), "d"(rshift),
 			"a"(dc_source), "a"(dc_colormap), "a"(dest),
-			"a"(sysvideo.pitch), "a"(dest_end)
+			"a"(sysvideo.pitch), "d"(count)
 	 	: /* clobbered registers */
-	 		"d0", "d1", "cc", "memory" 
+	 		"d0", "d1", "d2", "cc", "memory" 
 	);
 #endif
 } 
@@ -842,6 +845,66 @@ void R_DrawSpan (void)
 		}
 	}
 #undef RENDER_PIXEL
+#endif
+} 
+
+void R_DrawSpan060 (void) 
+{ 
+	unsigned short		count;
+	byte*		dest; 
+
+#ifdef RANGECHECK 
+	if (ds_x2 < ds_x1 || ds_x1<0 || ds_x2>=sysvideo.width  
+		|| (unsigned)ds_y>sysvideo.height)
+		I_Error( "R_DrawSpan: %i to %i at %i", ds_x1,ds_x2,ds_y);
+#endif 
+
+	dest = ylookup[ds_y] + columnofs[ds_x1];
+
+	// We do not check for zero spans here?
+	count = ds_x2 - ds_x1; 
+
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__))
+
+	{
+		long uv, uvstep;
+
+		uv = (ds_yfrac >> 6) & 0xffffUL;
+		uv |= (ds_xfrac<<10) & 0xffff0000UL;
+
+		uvstep = (ds_ystep>>6) & 0xffffUL;
+		uvstep |= (ds_xstep<<10) & 0xffff0000UL;
+
+    __asm__ __volatile__ (
+	"movel	%5,d0\n\t"
+	"moveql	#10,d2\n\t"
+	"lsrw	d2,d0\n\t"
+	"moveql	#6,d3\n\t"
+	"roll	d3,d0\n\t"
+	"moveql	#0,d1\n"
+
+"R_DrawSpan060_loop:\n\t"
+	"moveb	%1@(0,d0:w),d1\n\t"
+	"movel	%5,d0\n\t"
+
+	"moveb	%3@(0,d1:l),d4\n\t"
+	"lsrw	d2,d0\n\t"
+
+	"moveb	d4,%4@+\n\t"
+	"roll	d3,d0\n\t"
+
+	"subqw	#1,%0\n\t"
+	"addal	%2,%5\n\t"
+
+	"bpls	R_DrawSpan060_loop\n"
+	 	: /* no return value */
+	 	: /* input */
+	 		"d"(count), "a"(ds_source), "a"(uvstep), "a"(ds_colormap),
+			"a"(dest), "a"(uv)
+	 	: /* clobbered registers */
+	 		"d0", "d1", "d2", "d3", "d4", "a0", "cc", "memory" 
+	);
+	}
 #endif
 } 
 

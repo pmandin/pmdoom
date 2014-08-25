@@ -701,10 +701,15 @@ void R_ExecuteSetViewSize (void)
 		}
 		fuzzcolfunc = R_DrawFuzzColumn;
 		transcolfunc = R_DrawTranslatedColumn;
-		if (sysvideo.textured_spans)
-			spanfunc = R_DrawSpan;
-		else
+		if (sysvideo.textured_spans) {
+			if (sysgame.cpu060) {
+				spanfunc = R_DrawSpan060;
+			} else {
+				spanfunc = R_DrawSpan;
+			}
+		} else {
 			spanfunc = R_DrawSpanFlat;
+		}
 	} else {
 		colfunc = basecolfunc = R_DrawColumnLow;
 		fuzzcolfunc = R_DrawFuzzColumnLow;
