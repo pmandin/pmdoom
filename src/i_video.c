@@ -389,6 +389,10 @@ void I_FinishUpdate (void)
 	I_WaitVBL(1);
 
 	if (new_width && new_height) {
+		if (SDL_MUSTLOCK(screen)) {
+			SDL_UnlockSurface(screen);
+		}
+
 		InitSdlMode(new_width, new_height, sysvideo.bpp);
 		new_width = new_height = 0;
 	}
