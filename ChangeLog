@@ -2,6 +2,11 @@
 *                     Changes done to Doom sources                      *
 \***********************************************************************/
 
+-------------------------------- 0.59 -----------------------------------
+
+- Fixed SDL double buffer usage
+- Atari: Better 060 routine.
+
 -------------------------------- 0.58 -----------------------------------
 
 - Removed '-yieldcpu [on|off]' command-line option, useless now.
