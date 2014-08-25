@@ -389,7 +389,7 @@ void I_FinishUpdate (void)
 	I_WaitVBL(1);
 
 	if (new_width && new_height) {
-		if (SDL_MUSTLOCK(screen)) {
+		if (!sysvideo.overlay && SDL_MUSTLOCK(screen)) {
 			SDL_UnlockSurface(screen);
 		}
 
