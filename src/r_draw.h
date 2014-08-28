@@ -79,6 +79,7 @@ void 	R_DrawSpanFlat (void);
 
 // Low resolution mode, 160x200?
 void 	R_DrawSpanLow (void);
+void 	R_DrawSpanLow060 (void);
 void 	R_DrawSpanLowFlat (void);
 
 
