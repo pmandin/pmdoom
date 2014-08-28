@@ -893,9 +893,10 @@ void R_DrawSpan060 (void)
 #define ASM_ds_colormap	"%5"
 
     __asm__ __volatile__ (
-	"movel	%5,d0\n\t"
+	"movel	" ASM_uv ",d0\n\t"
 	"moveql	#10,d2\n\t"
 	"lsrw	d2,d0\n\t"
+	"addal	" ASM_uvstep "," ASM_uv "\n\t"
 	"roll	#6,d0\n\t"
 	"moveql	#0,d1\n"
 
@@ -912,7 +913,9 @@ void R_DrawSpan060 (void)
 	"subqw	#1," ASM_num_pix "\n\t"
 	"addal	" ASM_uvstep "," ASM_uv "\n\t"
 
-	"bgts	0b\n"
+	"bgts	0b\n\t"
+
+	"subal	" ASM_uvstep "," ASM_uv "\n"
 	 	: /* return value */
 			"+a"(dest), "+a"(uv), "+d"(num_pix)
 	 	: /* input */
@@ -949,6 +952,7 @@ void R_DrawSpan060 (void)
 	"movel	" ASM_uv ",d0\n\t"
 	"moveql	#10,d2\n\t"
 	"lsrw	d2,d0\n\t"
+	"addal	" ASM_uvstep "," ASM_uv "\n\t"
 	"roll	#6,d0\n\t"
 	"moveql	#0,d1\n"
 
@@ -995,7 +999,9 @@ void R_DrawSpan060 (void)
 	"addal	" ASM_uvstep "," ASM_uv "\n\t"
 	"roll	#6,d0\n\t"
 
-	"dbra	" ASM_count4 ",1b\n"
+	"dbra	" ASM_count4 ",1b\n\t"
+
+	"subal	" ASM_uvstep "," ASM_uv "\n"
 	 	: /* return value */
 			"+a"(dest), "+a"(uv), "+d"(count4)
 	 	: /* input */
@@ -1025,9 +1031,10 @@ void R_DrawSpan060 (void)
 #define ASM_ds_colormap	"%5"
 
     __asm__ __volatile__ (
-	"movel	%5,d0\n\t"
+	"movel	" ASM_uv ",d0\n\t"
 	"moveql	#10,d2\n\t"
 	"lsrw	d2,d0\n\t"
+	"addal	" ASM_uvstep "," ASM_uv "\n\t"
 	"roll	#6,d0\n\t"
 	"moveql	#0,d1\n"
 
