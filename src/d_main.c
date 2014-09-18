@@ -89,6 +89,7 @@ boolean		devparm;	// started game with -devparm
 boolean         nomonsters;	// checkparm of -nomonsters
 boolean         respawnparm;	// checkparm of -respawn
 boolean         fastparm;	// checkparm of -fast
+static boolean	store_demo;
 
 boolean         drone;
 
@@ -172,7 +173,7 @@ void D_ProcessEvents (void)
 	event_t*	ev;
 
 	// IF STORE DEMO, DO NOT ACCEPT INPUT
-	if ( ( gamemode == commercial ) && (W_CheckNumForName("map01")<0) )
+	if ( store_demo )
 		return;
 
 	for ( ; eventtail != eventhead ; eventtail = (++eventtail)&(MAXEVENTS-1) )
@@ -1188,6 +1189,10 @@ void D_DoomMain (void)
 
     printf ("ST_Init: Init status bar.\n");
     ST_Init ();
+
+	store_demo = false;
+	if ( ( gamemode == commercial ) && (W_CheckNumForName("map01")<0) )
+		store_demo = true;
 
     // check for a driver that wants intermission stats
     p = M_CheckParm ("-statcopy");
