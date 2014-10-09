@@ -43,6 +43,10 @@
 
 #include "i_rgb2yuv.h"
 
+/*--- Defines ---*/
+
+#define FRAME_DURATION (1000 / (TICRATE * 2))	/* How much to pause if we are a fast machine */
+
 /*--- Local variables ---*/
 
 static SDL_Surface *screen, *shadow=NULL;
@@ -303,7 +307,8 @@ void I_StartTic(void)
 //
 void I_FinishUpdate (void)
 {
-	int cur_ticks;
+	static int frame_start_tick = 0, frame_end_tick = 0;
+	int cur_ticks, cur_frame_duration;
 
 	// draws little dots on the bottom of the screen
 	if (devparm)
@@ -379,14 +384,20 @@ void I_FinishUpdate (void)
 	}
 
 	fps++;
-	cur_ticks=SDL_GetTicks();
+	frame_end_tick = cur_ticks = SDL_GetTicks();
 	if (cur_ticks-frame_tick>1000) {
 		frame_tick=cur_ticks;
 		last_fps=fps;
 		fps=0;
 	}
 
-	I_WaitVBL(1);
+	cur_frame_duration = frame_end_tick - frame_start_tick;
+	if (cur_frame_duration < FRAME_DURATION) {
+		int wait_duration = FRAME_DURATION - cur_frame_duration - 1;
+		if (wait_duration>0) {
+			SDL_Delay(wait_duration);
+		}
+	}
 
 	if (new_width && new_height) {
 		if (!sysvideo.overlay && SDL_MUSTLOCK(screen)) {
@@ -396,6 +407,8 @@ void I_FinishUpdate (void)
 		InitSdlMode(new_width, new_height, sysvideo.bpp);
 		new_width = new_height = 0;
 	}
+
+	frame_start_tick = frame_end_tick;
 }
 
 //
