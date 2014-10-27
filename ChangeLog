@@ -5,6 +5,8 @@
 -------------------------------- 0.60 -----------------------------------
 
 - D_ProcessEvents: Cache result of check for store demo on commercial version.
+  (Fix from Badmood project).
+- Remove pause on each frame, if machine is too slow.
 
 -------------------------------- 0.59 -----------------------------------
 
