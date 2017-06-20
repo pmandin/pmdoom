@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
@@ -71,7 +71,7 @@ void I_UpdateAudio(void *unused, Uint8 *stream, int len)
 }
 
 void I_ShutdownAudio(void)
-{    
+{
 	if (!sysaudio.enabled)
 		return;
 
@@ -86,7 +86,7 @@ void I_ShutdownAudio(void)
 }
 
 void I_InitAudio(void)
-{ 
+{
 	sysaudio.obtained.freq = sysaudio.desired.freq =
 		SAMPLERATE;
 	sysaudio.obtained.format = sysaudio.desired.format =
@@ -142,7 +142,9 @@ void I_InitAudio(void)
 	sysaudio.desired.userdata = NULL;
 
 	if (SDL_OpenAudio(&sysaudio.desired, &sysaudio.obtained)<0) {
-		I_Error("Could not open audio: %s\n", SDL_GetError());
+		fprintf(stderr, "Could not open audio: %s\n", SDL_GetError());
+		sysaudio.enabled = false;
+		return;
 	}
 
 	if ((sysaudio.obtained.format != AUDIO_S16SYS) || (sysaudio.obtained.channels != 2)) {
@@ -165,9 +167,9 @@ void I_InitAudio(void)
 
 		if (SDL_AudioDriverName(deviceName, sizeof(deviceName))==NULL) {
 			memset(deviceName, 0, sizeof(deviceName));
-		}		
+		}
 		deviceName[sizeof(deviceName)-1]='\0';
-		
+
 	fprintf(stderr, "Audio device: %s, %d Hz, %d bits, %d channels\n",
 /*	", %d frames, %d bytes\n",*/
 		deviceName,
