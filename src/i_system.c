@@ -176,7 +176,7 @@ static void I_InitFpu(void)
 	FixedDiv2 = FixedDiv2020;
 
 	if (cpu_cookie==60) {
-		if ((fpu_cookie>>16) & 0xfffe) == 16) {
+		if (((fpu_cookie>>16) & 0xfffe) == 16) {
 			__asm__ __volatile__ (
 					".chip	68060\n"
 				"	fmove%.l	fpcr,d0\n"
