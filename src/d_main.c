@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
@@ -589,7 +589,7 @@ void IdentifyVersion (void)
 
 	// Plutonia pack
 	ALLOCATE_IWAD_NAME(IWAD_NAME_PLUTONIA, GAME_FILE_PLUTONIA);
-	
+
 	// Tnt pack
 	ALLOCATE_IWAD_NAME(IWAD_NAME_TNT, GAME_FILE_TNT);
 
@@ -802,9 +802,9 @@ void D_DoomMain (void)
     char                    file[256];
 
     FindResponseFile ();
-	
+
     IdentifyVersion ();
-	
+
     setbuf (stdout, NULL);
     modifiedgame = false;
 
@@ -835,6 +835,10 @@ void D_DoomMain (void)
 	p=M_CheckParm ("-overlay");
     if (p) {
 		sysvideo.overlay = sysvideo.resize = true;
+	}
+	p=M_CheckParm ("-singlebuf");
+    if (p) {
+		sysvideo.doublebuf = false;
 	}
 
 	p=M_CheckParm ("-network");
@@ -927,26 +931,26 @@ void D_DoomMain (void)
 		 DOOM_VERSION/100,DOOM_VERSION%100);
 	break;
     }
-    
+
     printf ("%s\n",title);
 
     if (devparm)
 	printf(D_DEVSTR);
-    
+
     if (M_CheckParm("-cdrom"))
     {
 	printf(D_CDROM);
 	mkdir("c:\\doomdata",0);
 	strcpy (basedefault,"c:/doomdata/default.cfg");
-    }	
-    
+    }
+
     // turbo option
     if ( (p=M_CheckParm ("-turbo")) )
     {
 	int     scale = 200;
 	extern int forwardmove[2];
 	extern int sidemove[2];
-	
+
 	if (p<myargc-1)
 	    scale = atoi (myargv[p+1]);
 	if (scale < 10)
@@ -959,7 +963,7 @@ void D_DoomMain (void)
 	sidemove[0] = sidemove[0]*scale/100;
 	sidemove[1] = sidemove[1]*scale/100;
     }
-    
+
     // add any files specified on the command line with -file wadfile
     // to the wad list
     //
@@ -981,7 +985,7 @@ void D_DoomMain (void)
 	    printf("Warping to Episode %s, Map %s.\n",
 		   myargv[p+1],myargv[p+2]);
 	    break;
-	    
+
 	  case commercial:
 	  default:
 	    p = atoi (myargv[p+1]);
@@ -993,7 +997,7 @@ void D_DoomMain (void)
 	}
 	D_AddFile (file);
     }
-	
+
     p = M_CheckParm ("-file");
     if (p)
     {
@@ -1015,14 +1019,14 @@ void D_DoomMain (void)
 	D_AddFile (file);
 	printf("Playing demo %s.lmp.\n",myargv[p+1]);
     }
-    
+
     // get skill / episode / map from parms
     startskill = sk_medium;
     startepisode = 1;
     startmap = 1;
     autostart = false;
 
-		
+
     p = M_CheckParm ("-skill");
     if (p && p < myargc-1)
     {
@@ -1037,7 +1041,7 @@ void D_DoomMain (void)
 	startmap = 1;
 	autostart = true;
     }
-	
+
     p = M_CheckParm ("-timer");
     if (p && p < myargc-1 && deathmatch)
     {
@@ -1065,7 +1069,7 @@ void D_DoomMain (void)
 	}
 	autostart = true;
     }
-    
+
     // init subsystems
     printf ("Z_Init: Init zone memory allocation daemon. \n");
     Z_Init ();
@@ -1078,7 +1082,7 @@ void D_DoomMain (void)
 
     printf ("W_Init: Init WADfiles.\n");
     W_InitMultipleFiles (wadfiles);
-    
+
 
     // Check for -file in shareware
     if (modifiedgame)
@@ -1092,19 +1096,19 @@ void D_DoomMain (void)
 	    "dphoof","bfgga0","heada1","cybra1","spida1d1"
 	};
 	int i;
-	
+
 	if ( gamemode == shareware)
 	    I_Error("\nYou cannot -file with the shareware "
 		    "version. Register!");
 
 	// Check for fake IWAD with right name,
-	// but w/o all the lumps of the registered version. 
+	// but w/o all the lumps of the registered version.
 	if (gamemode == registered)
 	    for (i = 0;i < 23; i++)
 		if (W_CheckNumForName(name[i])<0)
 		    I_Error("\nThis is not the registered version.");
     }
-    
+
     // Iff additonal PWAD files are used, print modified banner
     if (modifiedgame)
     {
@@ -1118,7 +1122,7 @@ void D_DoomMain (void)
 	    );
 	getchar ();
     }
-	
+
 
     // Check and print which version is executed.
     switch ( gamemode )
@@ -1141,7 +1145,7 @@ void D_DoomMain (void)
 	    "===========================================================================\n"
 	);
 	break;
-	
+
       default:
 	// Ouch.
 	break;
@@ -1199,12 +1203,12 @@ void D_DoomMain (void)
     if (p && p<myargc-1)
     {
 	// for statistics driver
-	extern  void*	statcopy;                            
+	extern  void*	statcopy;
 
 	statcopy = (void*)atoi(myargv[p+1]);
 	printf ("External statistics registered.\n");
     }
-    
+
     // start the apropriate game based on parms
     p = M_CheckParm ("-record");
 
@@ -1213,7 +1217,7 @@ void D_DoomMain (void)
 	G_RecordDemo (myargv[p+1]);
 	autostart = true;
     }
-	
+
     p = M_CheckParm ("-musexport");
     if (p)
     {
@@ -1229,14 +1233,14 @@ void D_DoomMain (void)
 	G_DeferedPlayDemo (myargv[p+1]);
 	D_DoomLoop ();  // never returns
     }
-	
+
     p = M_CheckParm ("-timedemo");
     if (p && p < myargc-1)
     {
 	G_TimeDemo (myargv[p+1]);
 	D_DoomLoop ();  // never returns
     }
-	
+
 	p = M_CheckParm ("-loadgame");
 	if (p && p < myargc-1) {
 		if (M_CheckParm("-cdrom"))
@@ -1252,7 +1256,7 @@ void D_DoomMain (void)
 		}
 		G_LoadGame (file);
 	}
-	
+
 
     if ( gameaction != ga_loadgame )
     {

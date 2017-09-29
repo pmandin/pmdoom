@@ -2,6 +2,14 @@
 *                     Changes done to Doom sources                      *
 \***********************************************************************/
 
+-------------------------------- 0.61 -----------------------------------
+
+- Added '-singlebuf' command line option to disable double buffered video
+
+- Contributed by Vincent Riviere:
+  - Disable FPU initialization if _FPU cookie is 0, even on 68060 CPU.
+  - Disable audio if no audio device can be opened, instead of quitting.
+
 -------------------------------- 0.60 -----------------------------------
 
 - D_ProcessEvents: Cache result of check for store demo on commercial version.
@@ -55,7 +63,7 @@
 
 - Document used environment variables.
 - SDL_mixer enable/disable check in configure was wrong.
-- Fixed uninitialized bottom array for visplane structure, causing R_MapPlane 
+- Fixed uninitialized bottom array for visplane structure, causing R_MapPlane
   errors.
 - Atari: some fixes to compile Doom with old gcc 2.95.
 
@@ -260,8 +268,8 @@
 	  '-novavdi' to force 15 bits in 16 bits mode
 	  modified by Xavier Joubert:
 	    - save/restore palette in 256 colours mode.
-	    - black border around displayed zone. 
-	    - test if AES is present or not.	
+	    - black border around displayed zone.
+	    - test if AES is present or not.
 
 -------------------------------- 0.20 -----------------------------------
 
@@ -334,7 +342,7 @@ Atari version:
     On a standard Falcon, mixing 8 voices take to much time, and the
     keyboard routine can lose control, because the sound routine as a
     higher interrupt level. Avoid using mouse: it generates too many
-    keyboard interrupts. 
+    keyboard interrupts.
 
 Svgalib version:
   - use '-video-8' to force 320x240 double buffer mode (Mode X).
@@ -376,7 +384,7 @@ Atari version:
 
 -------------------------------- 0.08 -----------------------------------
 
-Linux/x86/PC and [Mint,Tos]/m68k/F30 common sources 
+Linux/x86/PC and [Mint,Tos]/m68k/F30 common sources
   - Back to C only for this version
   - Some ASM routs for Atari version
   - No more framerate displayed
@@ -387,7 +395,7 @@ Linux version:
   - Bug in Makefile: Math library was not linked in Svgalib version
 
 -------------------------------- 0.06 -----------------------------------
-	
+
 - Recalculated light shading : looks better now
 
 Atari version:
@@ -397,7 +405,7 @@ Atari version:
   - Network library removed (was not used) : smaller binary
 
 -------------------------------- 0.05 -----------------------------------
-	
+
 Atari version:
   - In VGA mode (320x240), screen is now correctly used. This could
     have provided some bugs.
@@ -410,12 +418,12 @@ Atari version:
 -------------------------------- 0.03 -----------------------------------
 
 - The status bar is better refreshed.
-	
+
 Atari version:
   - Modified to work on VGA: 320x200 display in a 320x240 screen.
 
 -------------------------------- 0.02 -----------------------------------
-	
+
 - In invulnerability mode, palette is correct. It was a bug in original
   DOOM sources.
 - Palettes have been recalculated for TrueColor mode: light shading is

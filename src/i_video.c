@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
@@ -69,7 +69,7 @@ int num_joystick;	/* from doomrc file */
 sysvideo_t sysvideo =
 {
 	SCREENWIDTH, SCREENHEIGHT, 8, SCREENWIDTH,
-	false, false, true, false
+	false, false, true, false, true
 };
 
 /*--- Local functions ---*/
@@ -140,7 +140,7 @@ void I_ShutdownGraphics(void)
 	if (joystick!=NULL) {
 		if (SDL_JoystickOpened(SDL_JoystickIndex(joystick))) {
 			SDL_JoystickClose(joystick);
-		}		
+		}
 	}
 
 	if (overlay) {
@@ -158,7 +158,7 @@ void I_StartTic(void)
 {
 	SDL_Event	event;
 	event_t		doom_event;
-	
+
 	while (SDL_PollEvent(&event)) {
 		switch(event.type) {
 			case SDL_KEYDOWN:
@@ -180,7 +180,7 @@ void I_StartTic(void)
 							mouse_grab = SDL_WM_GrabInput(SDL_GRAB_OFF);
 						} else {
 							mouse_grab = SDL_WM_GrabInput(SDL_GRAB_ON);
-						}					
+						}
 						if (mouse_grab == SDL_GRAB_OFF) {
 							SDL_ShowCursor(SDL_ENABLE);
 						} else {
@@ -418,7 +418,7 @@ void I_ReadScreen (byte* scr)
 {
 	Uint8 *src, *dest;
 	int y;
-	
+
 	src = (Uint8 *)screens[0];
 	dest = (Uint8 *)scr;
 
@@ -435,7 +435,7 @@ void I_GrabMouse(void)
 {
 	if (screen->flags & SDL_FULLSCREEN)
 		return;
-		
+
 	SDL_WM_GrabInput(mouse_grab);
 	if (mouse_grab == SDL_GRAB_ON) {
 		SDL_ShowCursor(SDL_DISABLE);
@@ -446,7 +446,7 @@ void I_UngrabMouse(void)
 {
 	if (screen->flags & SDL_FULLSCREEN)
 		return;
-		
+
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
 	SDL_ShowCursor(SDL_ENABLE);
 }
@@ -490,11 +490,11 @@ static void InitSdlMode(int width, int height, int bpp)
 	/* Check for biggest fullscreen size */
 	if (scr_flags & SDL_FULLSCREEN) {
 		SDL_Rect **modes;
-		
+
 		modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
 		if ((modes!=(SDL_Rect **)0) && (modes!=(SDL_Rect **)-1)) {
 			int maxx=0, maxy=0, i;
-			
+
 			for (i=0; modes[i]; ++i) {
 				if ((modes[i]->w > maxx) && (modes[i]->h > maxy)) {
 					maxx = modes[i]->w;
@@ -519,7 +519,7 @@ static void InitSdlMode(int width, int height, int bpp)
 	} else {
 		SDL_ShowCursor(SDL_ENABLE);
 		/* Restore previous grabbing state */
-		mouse_grab = SDL_WM_GrabInput(mouse_grab);	
+		mouse_grab = SDL_WM_GrabInput(mouse_grab);
 	}
 
 	output_surf = screen;
@@ -623,7 +623,9 @@ void I_InitGraphics(void)
 		return;
 	firsttime = 0;
 
-	scr_flags = SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF;
+	scr_flags = SDL_HWSURFACE|SDL_HWPALETTE;
+	if (sysvideo.doublebuf)
+		scr_flags |= SDL_DOUBLEBUF;
 	if (sysvideo.fullscreen)
 		scr_flags |= SDL_FULLSCREEN;
 	if (sysvideo.resize)

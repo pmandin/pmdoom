@@ -39,6 +39,9 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	'-bpp' pour choisir le nombre de bits par pixel (8 par defaut).
 	'-fullscreen' pour passer en plein ecran.
 	'-resize' pour autoriser la fenetre a changer de taille.
+	'-overlay' utilise l'overlay video YUV de SDL si disponible pour
+	  agrandir l'ecran.
+	'-singlebuf' pour désactiver le double buffer video
 	'-port <n>' pour changer le numero de port UDP a utiliser pour le reseau
 	  (5029 par defaut).
 	'-net <num> <host2> [<host3> <host4>]' pour jouer en reseau.
@@ -50,8 +53,6 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	  par defaut, soit 8 Mo).
 	'-iwad /path/to/filename.wad' si le fichier de donnees du jeu ne se
 	  trouve pas dans le repertoire courant.
-	'-overlay' utilise l'overlay video YUV de SDL si disponible pour
-	  agrandir l'ecran.
 	'-musexport' exporte les musiques en fichiers MIDI.
 	'-cdmusic' pour jouer les musiques a partir d'un CD Audio. Note: le
 	  changement de volume du CD Audio depuis le menu n'est gere que sur
@@ -114,6 +115,6 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	00:11	d_introa
 	80:50	Total
 
--- 
+--
 Patrice Mandin <patmandin@gmail.com>
 http://pmandin.atari.org/

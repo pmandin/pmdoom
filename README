@@ -35,6 +35,8 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	'-bpp' to choose bits per pixel (default is 8).
 	'-fullscreen' to run the game in fullscreen mode.
 	'-resize' to allow window to be resized.
+	'-overlay' use SDL YUV Overlay if available to scale screen.
+	'-singlebuf' to disable double buffered video
 	'-port <n>' to change UDP port for network game (default is 5029).
 	'-net <num> <host2> [<host3> <host4>]' to enable networked game.
 		<num> is player number (1-4).
@@ -44,7 +46,6 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	'-mem <n>' to change memory allocated to game in KB (8192 is default = 8MB).
 	'-iwad /path/to/filename.wad' if game data file is not in current
 	  directory.
-	'-overlay' use SDL YUV Overlay if available to scale screen.
 	'-musexport' exports music as MIDI files.
 	'-cdmusic' to replay music from Audio CD. Note: volume change from menu
 	  is usable only on Atari.
@@ -106,6 +107,6 @@ tnt.wad		Doom 2 Tnt pack, commercial
 	00:11	d_introa
 	80:50	Total
 
--- 
+--
 Patrice Mandin <patmandin@gmail.com>
 http://pmandin.atari.org/

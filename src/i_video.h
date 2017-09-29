@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
@@ -49,6 +49,7 @@ typedef struct {
 	int resize;
 	int textured_spans;
 	int overlay;
+	int doublebuf;
 } sysvideo_t;
 
 extern sysvideo_t sysvideo;
